@@ -13,7 +13,7 @@ export default async function handler(req, res) {
             pageInfo { hasNextPage endCursor }
             nodes {
               id title tags status descriptionHtml
-              images(first: 10) { nodes { id url } }
+              media(first: 10) { nodes { ... on MediaImage { id image { url } } } }
               variants(first: 50) {
                 nodes {
                   id title price sku
@@ -39,7 +39,7 @@ export default async function handler(req, res) {
         title: p.title,
         description: p.descriptionHtml.replace(/<[^>]+>/g, '').trim(),
         tags: p.tags,
-        images: p.images.nodes.map(i => ({ id: i.id, url: i.url })),
+        images: p.media.nodes.filter(n => n.id).map(n => ({ id: n.id, url: n.image?.url })).filter(n => n.url),
         variants: p.variants.nodes.map(v => ({
           id: v.id,
           title: v.title,
