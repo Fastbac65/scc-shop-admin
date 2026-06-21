@@ -160,6 +160,14 @@ textarea{resize:vertical;min-height:78px;line-height:1.5}
 .prod-desc{font-size:12px;color:#9aadbe;margin-top:3px;font-weight:500;line-height:1.4;max-width:340px}
 .edit-btn{padding:4px 10px;border-radius:6px;border:1.5px solid #dfdfdf;background:#fff;font-size:11px;font-weight:600;cursor:pointer;color:#004c98;font-family:'Quicksand',sans-serif;transition:all .15s}
 .edit-btn:hover{border-color:#004c98;background:#e1edf5}
+.edit-img-grid{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;min-height:20px}
+.edit-img-wrap{position:relative;width:76px;height:76px;border-radius:10px;overflow:hidden;border:1.5px solid #dfdfdf;flex-shrink:0}
+.edit-img-wrap img{width:100%;height:100%;object-fit:cover;display:block}
+.edit-img-del{position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:50%;border:none;background:rgba(28,52,81,.75);color:#fff;font-size:15px;cursor:pointer;line-height:1;padding:0;display:flex;align-items:center;justify-content:center;transition:background .15s}
+.edit-img-del:hover{background:#c0392b}
+.edit-img-overlay{position:absolute;inset:0;background:rgba(255,255,255,.65);display:flex;align-items:center;justify-content:center;font-size:18px}
+.add-photo-btn{display:inline-flex;align-items:center;gap:5px;padding:6px 14px;border:1.5px dashed #c5d4e0;border-radius:8px;font-size:12px;font-weight:600;color:#6b7a99;cursor:pointer;transition:all .15s;font-family:'Quicksand',sans-serif}
+.add-photo-btn:hover{border-color:#004c98;color:#004c98}
 
 /* ── Image modal ── */
 .img-modal{position:fixed;inset:0;background:rgba(28,52,81,.85);display:none;align-items:center;justify-content:center;z-index:99999;cursor:zoom-out;backdrop-filter:blur(4px)}
@@ -397,6 +405,14 @@ textarea{resize:vertical;min-height:78px;line-height:1.5}
       <div id="editSizeNote" style="font-size:11px;color:#9aadbe;margin-top:8px;display:none"></div>
     </div>
     <div class="field">
+      <label>Photos</label>
+      <div id="editImages" class="edit-img-grid"></div>
+      <label style="cursor:pointer">
+        <input type="file" accept="image/*" multiple id="editPhotoInput" onchange="addEditPhotos(this)" style="display:none">
+        <span class="add-photo-btn">+ Add photo</span>
+      </label>
+    </div>
+    <div class="field">
       <label>Tags</label>
       <div class="chips" id="editTags"></div>
     </div>
@@ -597,14 +613,15 @@ async function loadProductTable() {
           ? '<span class="stock-low">' + totalStock + ' left</span>'
           : '<span class="stock-ok">' + totalStock + ' in stock</span>';
       const safeTitle = p.title.replace(/"/g, '&quot;');
-      const allImgsJson = JSON.stringify(p.images).replace(/"/g, '&quot;');
+      const imgUrls = p.images.map(i => i.url);
+      const allImgsJson = JSON.stringify(imgUrls).replace(/"/g, '&quot;');
       let thumb;
       if (!p.images.length) {
         thumb = '<div class="no-img">📷</div>';
       } else {
         const badge = p.images.length > 1 ? '<span class="thumb-badge">+' + (p.images.length - 1) + '</span>' : '';
         thumb = '<div class="thumb-main" data-images="' + allImgsJson + '" data-title="' + safeTitle + '">'
-          + '<img class="prod-thumb" src="' + p.images[0] + '" data-img="' + p.images[0] + '" data-caption="' + safeTitle + '">'
+          + '<img class="prod-thumb" src="' + imgUrls[0] + '" data-img="' + imgUrls[0] + '" data-caption="' + safeTitle + '">'
           + badge + '</div>';
       }
       const descHtml = p.description ? '<div class="prod-desc">' + p.description + '</div>' : '';
@@ -713,7 +730,7 @@ function renderInventory() {
 
   invData.forEach(p => {
     const totalStock = p.variants.reduce((s, v) => s + v.qty, 0);
-    const imgHtml = p.images[0] ? '<img src="' + p.images[0] + '" class="prod-img">' : '';
+    const imgHtml = p.images[0] ? '<img src="' + p.images[0].url + '" class="prod-img">' : '';
     html += '<tr class="product-row"><td colspan="5">'
       + '<div style="display:flex;align-items:center;gap:8px">'
       + imgHtml
@@ -889,8 +906,76 @@ function openEditModal(id) {
     '<span class="chip tg' + (p.tags.includes(t) ? ' on' : '') + '" data-t="' + t + '" onclick="this.classList.toggle(\'on\')">' + label + '</span>'
   ).join('');
 
+  // Photos
+  renderEditImages(p.images);
+
   document.getElementById('editModal').classList.add('open');
   document.getElementById('editTitle').focus();
+}
+
+function renderEditImages(images) {
+  const grid = document.getElementById('editImages');
+  if (!images || !images.length) { grid.innerHTML = ''; return; }
+  grid.innerHTML = images.map(img =>
+    '<div class="edit-img-wrap" data-media-id="' + img.id + '">'
+    + '<img src="' + img.url + '">'
+    + '<button class="edit-img-del" onclick="deleteEditImage(this,\'' + img.id.replace(/'/g, '') + '\')">×</button>'
+    + '</div>'
+  ).join('');
+}
+
+async function deleteEditImage(btn, mediaId) {
+  if (!confirm('Delete this photo?')) return;
+  btn.disabled = true;
+  const res = await fetch('/api/delete-image', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ productId: _editId, mediaId }),
+  });
+  const d = await res.json();
+  if (d.error) { alert(d.error); btn.disabled = false; return; }
+  btn.closest('.edit-img-wrap').remove();
+  const p = _products.find(x => x.id === _editId);
+  if (p) p.images = p.images.filter(i => i.id !== mediaId);
+}
+
+async function addEditPhotos(input) {
+  const grid = document.getElementById('editImages');
+  for (const file of Array.from(input.files)) {
+    const wrap = document.createElement('div');
+    wrap.className = 'edit-img-wrap';
+    const preview = URL.createObjectURL(file);
+    wrap.innerHTML = '<img src="' + preview + '"><div class="edit-img-overlay">⟳</div>';
+    grid.appendChild(wrap);
+    try {
+      const base64 = await fileToBase64(file);
+      const res = await fetch('/api/upload-image', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ productId: _editId, filename: file.name, mimeType: file.type, base64 }),
+      });
+      const d = await res.json();
+      if (d.error) throw new Error(d.error);
+      const safeId = (d.mediaId || '').replace(/'/g, '');
+      wrap.innerHTML = '<img src="' + preview + '"><button class="edit-img-del" onclick="deleteEditImage(this,\'' + safeId + '\')">×</button>';
+      wrap.dataset.mediaId = d.mediaId;
+      const p = _products.find(x => x.id === _editId);
+      if (p) p.images.push({ id: d.mediaId, url: d.url || preview });
+    } catch (err) {
+      wrap.querySelector('.edit-img-overlay').textContent = '✗';
+      wrap.querySelector('.edit-img-overlay').style.color = '#c0392b';
+      setTimeout(() => wrap.remove(), 2000);
+    }
+  }
+  input.value = '';
+}
+
+function fileToBase64(file) {
+  return new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onload = e => resolve(e.target.result.split(',')[1]);
+    reader.readAsDataURL(file);
+  });
 }
 
 function closeEditModal() {
