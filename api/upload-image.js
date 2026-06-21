@@ -6,7 +6,8 @@ export default async function handler(req, res) {
   try {
     const body = req.body ?? await readBody(req);
     const { productId, filename, mimeType, base64 } = body;
-    if (!base64) return res.status(400).json({ error: 'No image data received' });
+    console.log('[upload-image] productId:', productId, 'file:', filename, 'base64 length:', base64?.length ?? 'MISSING');
+    if (!base64) return res.status(400).json({ error: 'No image data received — body keys: ' + Object.keys(body).join(', ') });
 
     const buffer = Buffer.from(base64, 'base64');
     const fileSize = buffer.length.toString();
@@ -50,6 +51,7 @@ export default async function handler(req, res) {
     const node = r3.productCreateMedia.media[0];
     res.status(200).json({ ok: true, mediaId: node?.id, url: node?.image?.url || target.resourceUrl });
   } catch (err) {
+    console.error('[upload-image]', err.message, err.stack);
     res.status(500).json({ error: err.message });
   }
 }
