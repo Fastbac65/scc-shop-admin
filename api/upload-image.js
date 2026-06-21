@@ -1,19 +1,12 @@
-import { shopifyClient } from './_shopify.js';
-
-export const config = {
-  api: {
-    bodyParser: {
-      sizeLimit: '12mb',
-    },
-  },
-};
+import { shopifyClient, readBody } from './_shopify.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
   const { gql } = shopifyClient();
   try {
-    const { productId, filename, mimeType, base64 } = req.body;
-    if (!base64) return res.status(400).json({ error: 'No image data received — file may be too large' });
+    const body = req.body ?? await readBody(req);
+    const { productId, filename, mimeType, base64 } = body;
+    if (!base64) return res.status(400).json({ error: 'No image data received' });
 
     const buffer = Buffer.from(base64, 'base64');
     const fileSize = buffer.length.toString();
