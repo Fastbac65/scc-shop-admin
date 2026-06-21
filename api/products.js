@@ -12,7 +12,7 @@ export default async function handler(req, res) {
           products(first: 50, after: $cursor) {
             pageInfo { hasNextPage endCursor }
             nodes {
-              id title tags status
+              id title tags status descriptionHtml
               images(first: 10) { nodes { url } }
               variants(first: 50) {
                 nodes {
@@ -37,6 +37,7 @@ export default async function handler(req, res) {
       .map(p => ({
         id: p.id.split('/').pop(),
         title: p.title,
+        description: p.descriptionHtml.replace(/<[^>]+>/g, '').trim(),
         tags: p.tags,
         images: p.images.nodes.map(i => i.url),
         variants: p.variants.nodes.map(v => ({

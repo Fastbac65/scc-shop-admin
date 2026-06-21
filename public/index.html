@@ -150,6 +150,19 @@ textarea{resize:vertical;min-height:78px;line-height:1.5}
 .thumb-overflow-badge{position:absolute;top:-6px;right:-6px;background:#e53e3e;color:#fff;font-size:10px;font-weight:700;min-width:18px;height:18px;padding:0 4px;border-radius:99px;pointer-events:none;line-height:18px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.3);border:1.5px solid #fff}
 .no-img{width:48px;height:48px;border-radius:8px;border:1.5px dashed #dfdfdf;background:#f5f5f5;display:flex;align-items:center;justify-content:center;font-size:18px;color:#c0c8d8}
 
+/* ── Edit modal ── */
+.edit-modal{position:fixed;inset:0;background:rgba(28,52,81,.7);display:none;align-items:center;justify-content:center;z-index:99998;backdrop-filter:blur(4px);padding:20px}
+.edit-modal.open{display:flex}
+.edit-panel{background:#fff;border-radius:20px;padding:28px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.3)}
+.edit-panel h2{font-size:16px;font-weight:700;color:#1c3451;margin-bottom:20px}
+.edit-footer{display:flex;gap:10px;margin-top:20px}
+.edit-footer .btn-primary{margin-top:0;flex:1}
+.btn-outline{padding:15px;border:1.5px solid #dfdfdf;border-radius:12px;background:#fff;font-size:16px;font-weight:700;cursor:pointer;color:#6b7a99;font-family:'Quicksand',sans-serif;transition:all .15s}
+.btn-outline:hover{border-color:#1c3451;color:#1c3451}
+.prod-desc{font-size:12px;color:#9aadbe;margin-top:3px;font-weight:500;line-height:1.4;max-width:340px}
+.edit-btn{padding:4px 10px;border-radius:6px;border:1.5px solid #dfdfdf;background:#fff;font-size:11px;font-weight:600;cursor:pointer;color:#004c98;font-family:'Quicksand',sans-serif;transition:all .15s}
+.edit-btn:hover{border-color:#004c98;background:#e1edf5}
+
 /* ── Image modal ── */
 .img-modal{position:fixed;inset:0;background:rgba(28,52,81,.85);display:none;align-items:center;justify-content:center;z-index:99999;cursor:zoom-out;backdrop-filter:blur(4px)}
 .img-modal.open{display:flex}
@@ -241,8 +254,8 @@ textarea{resize:vertical;min-height:78px;line-height:1.5}
     <div class="field">
       <div class="group-label">Gender <span class="hint">— pick both for unisex</span></div>
       <div class="chips">
-        <span class="chip tg" data-t="mens">Men's</span>
-        <span class="chip tg" data-t="womens">Women's</span>
+        <span class="chip tg" data-t="male">Male</span>
+        <span class="chip tg" data-t="female">Female</span>
       </div>
     </div>
     <div class="field">
@@ -356,6 +369,34 @@ textarea{resize:vertical;min-height:78px;line-height:1.5}
   <div id="invResult" class="result" style="margin-top:14px"></div>
 
 </div>
+</div>
+
+<!-- Edit product modal -->
+<div class="edit-modal" id="editModal" onclick="if(event.target===this)closeEditModal()">
+  <div class="edit-panel">
+    <h2>Edit Product</h2>
+    <div class="field">
+      <label>Product name</label>
+      <input type="text" id="editTitle">
+    </div>
+    <div class="field">
+      <label>Price <span class="hint">— applies to all variants</span></label>
+      <div class="price-row"><span>$</span><input type="number" id="editPrice" min="0" step="0.01" style="max-width:130px"></div>
+    </div>
+    <div class="field">
+      <label>Description</label>
+      <textarea id="editDesc" style="min-height:100px"></textarea>
+    </div>
+    <div class="field">
+      <label>Tags</label>
+      <div class="chips" id="editTags"></div>
+    </div>
+    <div id="editError" class="result fail" style="margin-top:14px;display:none"></div>
+    <div class="edit-footer">
+      <button class="btn-outline" onclick="closeEditModal()">Cancel</button>
+      <button class="btn-primary" id="editSaveBtn" onclick="saveProduct()">Save changes</button>
+    </div>
+  </div>
 </div>
 
 <!-- Image modal -->
@@ -571,16 +612,20 @@ async function loadProductTable() {
           + '<div class="thumb-main"><img class="prod-thumb" src="' + p.images[0] + '" data-img="' + p.images[0] + '" data-caption="' + safeTitle + '">' + mainBadge + '</div>'
           + extras + '</div>';
       }
+      const descHtml = p.description ? '<div class="prod-desc">' + p.description + '</div>' : '';
+      const editPayload = JSON.stringify({ id: p.id, title: p.title, price: p.variants[0]?.price || '0', description: p.description || '', tags: p.tags }).replace(/'/g, '&#39;');
       return '<tr>'
         + '<td style="width:60px">' + thumb + '</td>'
-        + '<td><a class="prod-title" href="' + STORE_URL + '/admin/products/' + p.id + '" target="_blank">' + p.title + '</a></td>'
+        + '<td><a class="prod-title" href="' + STORE_URL + '/admin/products/' + p.id + '" target="_blank">' + p.title + '</a>' + descHtml + '</td>'
         + '<td>$' + parseFloat(p.variants[0]?.price || 0).toFixed(2) + '</td>'
         + '<td>' + catTags.map(t => '<span class="tag-badge">' + t + '</span>').join(' ') + '</td>'
         + '<td style="font-size:12px;color:#6b7a99">' + sizes + '</td>'
-        + '<td>' + stockBadge + '</td></tr>';
+        + '<td>' + stockBadge + '</td>'
+        + '<td><button class="edit-btn" onclick=\'openEditModal(' + editPayload + ')\'>Edit</button></td>'
+        + '</tr>';
     }).join('');
 
-    el.innerHTML = '<table class="prod-table"><thead><tr><th></th><th>Product</th><th>Price</th><th>Tags</th><th>Sizes</th><th>Stock</th></tr></thead><tbody>' + rows + '</tbody></table>';
+    el.innerHTML = '<table class="prod-table"><thead><tr><th></th><th>Product</th><th>Price</th><th>Tags</th><th>Sizes</th><th>Stock</th><th></th></tr></thead><tbody>' + rows + '</tbody></table>';
   } catch (err) {
     el.innerHTML = '<p style="color:#7a1c1c;padding:16px">Error: ' + err.message + '</p>';
   }
@@ -808,6 +853,72 @@ function addCustomTag() {
 
 document.getElementById('customTagInput').addEventListener('keydown', e => {
   if (e.key === 'Enter') { e.preventDefault(); addCustomTag(); }
+});
+
+// ── Edit product modal ────────────────────────────────────────────────────────
+const ALL_TAGS = [
+  { t:'adult', label:'Adults' }, { t:'nippers_src', label:'Nippers/SRC' },
+  { t:'male', label:'Male' }, { t:'female', label:'Female' },
+  { t:'tee_shirt', label:'T-Shirt' }, { t:'polo', label:'Polo' }, { t:'hoodie', label:'Hoodie' },
+  { t:'rashie', label:'Rashie' }, { t:'jacket', label:'Jacket' }, { t:'swimwear', label:'Swimwear' },
+  { t:'cap', label:'Cap/Hat' }, { t:'towel', label:'Towel' }, { t:'bag', label:'Bag' },
+  { t:'boardshorts', label:'Boardshorts' }, { t:'accessory', label:'Accessory' },
+  { t:'new', label:'New Arrival' }, { t:'competitor', label:'Competitor' }, { t:'club-merch', label:'Club Merch' },
+];
+let _editId = null;
+
+function openEditModal({ id, title, price, description, tags }) {
+  _editId = id;
+  document.getElementById('editTitle').value = title;
+  document.getElementById('editPrice').value = parseFloat(price).toFixed(2);
+  document.getElementById('editDesc').value = description;
+  document.getElementById('editError').style.display = 'none';
+
+  const container = document.getElementById('editTags');
+  container.innerHTML = ALL_TAGS.map(({ t, label }) =>
+    '<span class="chip tg' + (tags.includes(t) ? ' on' : '') + '" data-t="' + t + '" onclick="this.classList.toggle(\'on\')">' + label + '</span>'
+  ).join('');
+
+  document.getElementById('editModal').classList.add('open');
+  document.getElementById('editTitle').focus();
+}
+
+function closeEditModal() {
+  document.getElementById('editModal').classList.remove('open');
+  _editId = null;
+}
+
+async function saveProduct() {
+  const btn = document.getElementById('editSaveBtn');
+  const errEl = document.getElementById('editError');
+  btn.disabled = true; btn.textContent = 'Saving…';
+  errEl.style.display = 'none';
+  try {
+    const tags = [...document.querySelectorAll('#editTags .chip.on')].map(c => c.dataset.t);
+    const res = await fetch('/api/update-product', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: _editId,
+        title: document.getElementById('editTitle').value.trim(),
+        price: document.getElementById('editPrice').value,
+        description: document.getElementById('editDesc').value.trim(),
+        tags,
+      }),
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    closeEditModal();
+    loadProductTable();
+  } catch (err) {
+    errEl.innerHTML = err.message;
+    errEl.style.display = 'block';
+  }
+  btn.disabled = false; btn.textContent = 'Save changes';
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && document.getElementById('editModal').classList.contains('open')) closeEditModal();
 });
 
 // Floating scroll-to-top
