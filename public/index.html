@@ -418,7 +418,7 @@ textarea{resize:vertical;min-height:78px;line-height:1.5}
 <script>
 // Store URL — populated from /api/config so the Shopify token never reaches the browser
 let STORE_URL = '';
-fetch('/api/config').then(r => r.json()).then(d => { STORE_URL = 'https://' + d.store; loadProductTable(); });
+fetch('/api/config').then(r => r.json()).then(d => { STORE_URL = 'https://' + d.store; loadProductTable(); loadInventory(); loadCollections(); });
 
 // ── Navigation ────────────────────────────────────────────────────────────────
 function showPage(name) {
