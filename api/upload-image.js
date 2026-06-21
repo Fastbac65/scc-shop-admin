@@ -27,12 +27,18 @@ export default async function handler(req, res) {
     if (errs1.length) throw new Error(errs1[0].message);
     const target = r1.stagedUploadsCreate.stagedTargets[0];
 
-    // Step 2: POST file to S3
+    // Step 2: POST file to S3/GCS
+    console.log('[upload-image] staged target url:', target.url);
+    console.log('[upload-image] params:', target.parameters.map(p => p.name).join(', '));
     const form = new FormData();
     for (const p of target.parameters) form.append(p.name, p.value);
     form.append('file', new Blob([buffer], { type: mimeType }), filename);
     const uploadRes = await fetch(target.url, { method: 'POST', body: form });
-    if (!uploadRes.ok) throw new Error('Storage upload failed: ' + uploadRes.status);
+    if (!uploadRes.ok) {
+      const errText = await uploadRes.text();
+      console.error('[upload-image] GCS error:', uploadRes.status, errText.slice(0, 500));
+      throw new Error('Storage upload failed: ' + uploadRes.status + ' — ' + errText.slice(0, 200));
+    }
 
     // Step 3: attach media to product
     const r3 = await gql(`
