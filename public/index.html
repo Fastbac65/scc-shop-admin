@@ -135,19 +135,10 @@ textarea{resize:vertical;min-height:78px;line-height:1.5}
 .coll-handle{font-size:11px;color:#9aadbe;margin-top:2px}
 
 /* ── Product image thumbnails ── */
-.thumb-group{display:flex;align-items:center;gap:0;transition:gap .2s}
-.thumb-group:hover{gap:5px}
-.thumb-main{position:relative;flex-shrink:0}
-.prod-thumb{width:48px;height:48px;object-fit:cover;border-radius:8px;border:1.5px solid #dfdfdf;cursor:zoom-in;transition:opacity .15s;display:block;flex-shrink:0}
+.thumb-main{position:relative;display:inline-block;flex-shrink:0}
+.prod-thumb{width:48px;height:48px;object-fit:cover;border-radius:8px;border:1.5px solid #dfdfdf;cursor:zoom-in;transition:opacity .15s;display:block}
 .prod-thumb:hover{opacity:.8}
-.thumb-extra{width:48px;height:48px;object-fit:cover;border-radius:8px;cursor:zoom-in;display:block;flex-shrink:0;max-width:0;opacity:0;border:0px solid #dfdfdf;transition:max-width .25s ease,opacity .2s ease,border-width .25s ease}
-.thumb-group:hover .thumb-extra{max-width:48px;opacity:1;border-width:1.5px}
-.thumb-extra-wrap{position:relative;flex-shrink:0;max-width:0;opacity:0;transition:max-width .25s ease,opacity .2s ease}
-.thumb-group:hover .thumb-extra-wrap{max-width:54px;opacity:1}
-.thumb-extra-wrap img{width:48px;height:48px;object-fit:cover;border-radius:8px;border:1.5px solid #dfdfdf;cursor:zoom-in;display:block}
-.thumb-badge{position:absolute;top:-6px;right:-6px;background:#e53e3e;color:#fff;font-size:10px;font-weight:700;min-width:18px;height:18px;padding:0 4px;border-radius:99px;pointer-events:none;line-height:18px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.3);border:1.5px solid #fff;transition:opacity .2s}
-.thumb-group:hover .thumb-badge{opacity:0}
-.thumb-overflow-badge{position:absolute;top:-6px;right:-6px;background:#e53e3e;color:#fff;font-size:10px;font-weight:700;min-width:18px;height:18px;padding:0 4px;border-radius:99px;pointer-events:none;line-height:18px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.3);border:1.5px solid #fff}
+.thumb-badge{position:absolute;top:-6px;right:-6px;background:#e53e3e;color:#fff;font-size:10px;font-weight:700;min-width:18px;height:18px;padding:0 4px;border-radius:99px;pointer-events:none;line-height:18px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.3);border:1.5px solid #fff}
 .no-img{width:48px;height:48px;border-radius:8px;border:1.5px dashed #dfdfdf;background:#f5f5f5;display:flex;align-items:center;justify-content:center;font-size:18px;color:#c0c8d8}
 
 /* ── Edit modal ── */
@@ -566,9 +557,9 @@ document.getElementById('imgModalStrip').addEventListener('click', e => {
 document.addEventListener('click', e => {
   const img = e.target.closest('img[data-img]');
   if (img && !img.classList.contains('strip-thumb') && !img.closest('.img-modal')) {
-    const group = img.closest('.thumb-group');
-    const allImages = group && group.dataset.images ? JSON.parse(group.dataset.images) : null;
-    const caption = img.dataset.caption || (group ? group.dataset.title : '');
+    const wrap = img.closest('.thumb-main');
+    const allImages = wrap && wrap.dataset.images ? JSON.parse(wrap.dataset.images) : null;
+    const caption = img.dataset.caption || (wrap ? wrap.dataset.title : '');
     openModal(img.dataset.img, caption, allImages);
   }
 });
@@ -598,22 +589,10 @@ async function loadProductTable() {
       if (!p.images.length) {
         thumb = '<div class="no-img">📷</div>';
       } else {
-        const mainBadge = p.images.length > 1
-          ? '<span class="thumb-badge">+' + (p.images.length - 1) + '</span>' : '';
-        let extras = '';
-        if (p.images[1]) {
-          extras += '<img class="thumb-extra" src="' + p.images[1] + '" data-img="' + p.images[1] + '" data-caption="' + safeTitle + '">';
-        }
-        if (p.images[2]) {
-          const overflowBadge = p.images.length > 3
-            ? '<span class="thumb-overflow-badge">+' + (p.images.length - 3) + '</span>' : '';
-          extras += '<div class="thumb-extra-wrap">'
-            + '<img src="' + p.images[2] + '" data-img="' + p.images[2] + '" data-caption="' + safeTitle + '">'
-            + overflowBadge + '</div>';
-        }
-        thumb = '<div class="thumb-group" data-images="' + allImgsJson + '" data-title="' + safeTitle + '">'
-          + '<div class="thumb-main"><img class="prod-thumb" src="' + p.images[0] + '" data-img="' + p.images[0] + '" data-caption="' + safeTitle + '">' + mainBadge + '</div>'
-          + extras + '</div>';
+        const badge = p.images.length > 1 ? '<span class="thumb-badge">+' + (p.images.length - 1) + '</span>' : '';
+        thumb = '<div class="thumb-main" data-images="' + allImgsJson + '" data-title="' + safeTitle + '">'
+          + '<img class="prod-thumb" src="' + p.images[0] + '" data-img="' + p.images[0] + '" data-caption="' + safeTitle + '">'
+          + badge + '</div>';
       }
       const descHtml = p.description ? '<div class="prod-desc">' + p.description + '</div>' : '';
       return '<tr>'
