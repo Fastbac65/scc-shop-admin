@@ -20,7 +20,7 @@ export default async function handler(req, res) {
                   inventoryItem {
                     id
                     inventoryLevels(first: 1) {
-                      nodes { quantities(names: ["available"]) { quantity } }
+                      nodes { quantities(names: ["available","committed","on_hand"]) { name quantity } }
                     }
                   }
                 }
@@ -46,7 +46,9 @@ export default async function handler(req, res) {
           price: v.price,
           sku: v.sku,
           inventoryItemId: v.inventoryItem.id,
-          qty: v.inventoryItem.inventoryLevels.nodes[0]?.quantities[0]?.quantity ?? 0,
+          qty: v.inventoryItem.inventoryLevels.nodes[0]?.quantities.find(q => q.name === 'available')?.quantity ?? 0,
+          committed: v.inventoryItem.inventoryLevels.nodes[0]?.quantities.find(q => q.name === 'committed')?.quantity ?? 0,
+          onHand: v.inventoryItem.inventoryLevels.nodes[0]?.quantities.find(q => q.name === 'on_hand')?.quantity ?? 0,
         })),
       }))
       .sort((a, b) => a.title.localeCompare(b.title));

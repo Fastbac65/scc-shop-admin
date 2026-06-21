@@ -691,16 +691,21 @@ function renderInventory() {
   const el = document.getElementById('invTable');
   if (!invData.length) { el.innerHTML = '<div class="loading">No products found.</div>'; return; }
 
-  let html = '<table class="inv-table"><thead><tr><th>Product</th><th>Variant</th><th>SKU</th><th style="text-align:center">Qty</th><th></th></tr></thead><tbody>';
+  let html = '<table class="inv-table"><thead><tr>'
+    + '<th>Product / Variant</th><th>SKU</th>'
+    + '<th style="text-align:center">Committed</th>'
+    + '<th style="text-align:center">Available</th>'
+    + '<th style="text-align:center">On Hand</th>'
+    + '<th></th></tr></thead><tbody>';
 
   invData.forEach(p => {
     const totalStock = p.variants.reduce((s, v) => s + v.qty, 0);
     const imgHtml = p.images[0] ? '<img src="' + p.images[0] + '" class="prod-img">' : '';
-    html += '<tr class="product-row"><td colspan="5">'
+    html += '<tr class="product-row"><td colspan="6">'
       + '<div style="display:flex;align-items:center;gap:8px">'
       + imgHtml
       + '<a class="prod-title" href="' + STORE_URL + '/admin/products/' + p.id + '" target="_blank">' + p.title + '</a>'
-      + '<span class="inv-total">— ' + totalStock + ' in stock</span>'
+      + '<span class="inv-total">— ' + totalStock + ' available</span>'
       + '</div></td></tr>';
 
     p.variants.forEach(v => {
@@ -708,14 +713,16 @@ function renderInventory() {
       const variantCell = singleVariant
         ? '<span class="inv-single">One size</span>'
         : '<span class="inv-variant">' + v.title + '</span>';
+      const itemKey = v.inventoryItemId.split('/').pop();
       html += '<tr data-item-id="' + v.inventoryItemId + '" data-current-qty="' + v.qty + '">'
-        + '<td></td>'
         + '<td>' + variantCell + '</td>'
         + '<td><span class="sku-text">' + (v.sku || '—') + '</span></td>'
+        + '<td style="text-align:center;color:#6b7a99">' + v.committed + '</td>'
         + '<td style="text-align:center">'
         +   '<input type="number" class="inv-qty" min="0" value="' + v.qty + '" data-original="' + v.qty + '" oninput="onQtyChange(this)">'
         + '</td>'
-        + '<td><div class="inv-actions" id="actions-' + v.inventoryItemId.split('/').pop() + '"></div></td>'
+        + '<td style="text-align:center;color:#6b7a99">' + v.onHand + '</td>'
+        + '<td><div class="inv-actions" id="actions-' + itemKey + '"></div></td>'
         + '</tr>';
     });
   });
