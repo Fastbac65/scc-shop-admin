@@ -1033,6 +1033,8 @@ function fileToBase64(file) {
 
 function closeEditModal() {
   document.getElementById('editModal').classList.remove('open');
+  const btn = document.getElementById('editSaveBtn');
+  btn.disabled = false; btn.textContent = 'Save changes';
   _editId = null; _editVariants = [];
 }
 
