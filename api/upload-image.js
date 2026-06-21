@@ -6,8 +6,7 @@ export default async function handler(req, res) {
   try {
     const body = req.body ?? await readBody(req);
     const { productId, filename, mimeType, base64 } = body;
-    console.log('[upload-image] productId:', productId, 'file:', filename, 'base64 length:', base64?.length ?? 'MISSING');
-    if (!base64) return res.status(400).json({ error: 'No image data received — body keys: ' + Object.keys(body).join(', ') });
+    if (!base64) return res.status(400).json({ error: 'No image data received' });
 
     const buffer = Buffer.from(base64, 'base64');
     const fileSize = buffer.length.toString();
@@ -27,17 +26,16 @@ export default async function handler(req, res) {
     if (errs1.length) throw new Error(errs1[0].message);
     const target = r1.stagedUploadsCreate.stagedTargets[0];
 
-    // Step 2: POST file to S3/GCS
-    console.log('[upload-image] staged target url:', target.url);
-    console.log('[upload-image] params:', target.parameters.map(p => p.name).join(', '));
-    const form = new FormData();
-    for (const p of target.parameters) form.append(p.name, p.value);
-    form.append('file', new Blob([buffer], { type: mimeType }), filename);
-    const uploadRes = await fetch(target.url, { method: 'POST', body: form });
+    // Step 2: PUT file directly to V4 signed URL (X-Goog-SignedHeaders=host only)
+    const uploadRes = await fetch(target.url, {
+      method: 'PUT',
+      headers: { 'Content-Type': mimeType },
+      body: buffer,
+    });
     if (!uploadRes.ok) {
       const errText = await uploadRes.text();
-      console.error('[upload-image] GCS error:', uploadRes.status, errText.slice(0, 500));
-      throw new Error('Storage upload failed: ' + uploadRes.status + ' — ' + errText.slice(0, 200));
+      console.error('[upload-image] GCS PUT error:', uploadRes.status, errText.slice(0, 300));
+      throw new Error('Storage upload failed: ' + uploadRes.status);
     }
 
     // Step 3: attach media to product
@@ -57,7 +55,6 @@ export default async function handler(req, res) {
     const node = r3.productCreateMedia.media[0];
     res.status(200).json({ ok: true, mediaId: node?.id, url: node?.image?.url || target.resourceUrl });
   } catch (err) {
-    console.error('[upload-image]', err.message, err.stack);
     res.status(500).json({ error: err.message });
   }
 }
