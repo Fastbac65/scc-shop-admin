@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>South Curly Shop — Admin</title>
+<link rel="icon" href="/favicon.ico" type="image/x-icon">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+button,input,textarea,select{font-family:'Quicksand',sans-serif}
+body{font-family:'Quicksand',sans-serif;background:#f5f5f5;color:#1c3451;min-height:100vh;font-weight:500}
+
+/* ── Nav ── */
+.topbar{background:#004c98;padding:0 20px;display:flex;align-items:stretch;gap:4px}
+.topbar-logo{display:flex;align-items:center;padding:6px 16px 6px 0;margin-right:8px;border-right:1px solid rgba(255,255,255,.2)}
+.topbar-logo img{height:56px;width:auto;display:block}
+.nav-btn{background:none;border:none;color:rgba(242,242,242,.7);font-size:14px;font-weight:600;padding:16px 18px;cursor:pointer;border-bottom:3px solid transparent;transition:all .15s}
+.nav-btn:hover{color:#f2f2f2}
+.nav-btn.active{color:#f2f2f2;border-bottom-color:#f2f2f2}
+
+/* ── Layout ── */
+.page{display:none;padding:32px 20px 80px}
+.page.active{display:block}
+.narrow{max-width:660px;margin:0 auto}
+.wide{max-width:1100px;margin:0 auto}
+
+/* ── Cards ── */
+.card{background:#fff;border-radius:16px;padding:26px 28px;margin-bottom:14px;box-shadow:0 1px 3px rgba(28,52,81,.08),0 4px 12px rgba(28,52,81,.05)}
+.card h2{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#9aadbe;margin-bottom:18px}
+
+/* ── Form fields ── */
+.field{margin-bottom:18px}.field:last-child{margin-bottom:0}
+label{display:block;font-size:13px;font-weight:600;color:#1c3451;margin-bottom:6px}
+.hint{font-size:12px;font-weight:500;color:#6b7a99;margin-left:4px}
+input[type=text],input[type=number],textarea{width:100%;padding:11px 13px;border:1.5px solid #dfdfdf;border-radius:10px;font-size:15px;color:#1c3451;background:#fff;transition:border-color .15s;outline:none;font-family:'Quicksand',sans-serif;font-weight:500}
+input[type=text]:focus,input[type=number]:focus,textarea:focus{border-color:#004c98;background:#fff}
+textarea{resize:vertical;min-height:78px;line-height:1.5}
+.price-row{display:flex;align-items:center;gap:8px}
+.price-row span{font-size:19px;font-weight:600;color:#94a3b8}
+.price-row input{max-width:130px}
+
+/* ── Chips ── */
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:2px}
+.chip{padding:8px 15px;border-radius:99px;border:1.5px solid #dfdfdf;background:#f5f5f5;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;user-select:none;color:#1c3451}
+.chip:hover{border-color:#004c98;color:#004c98}
+.chip.on{background:#004c98;border-color:#004c98;color:#f2f2f2}
+.chip-sm{padding:6px 12px;font-size:12px;border-radius:99px;border:1.5px solid #4e7fb6;background:#e1edf5;color:#1c3451;cursor:pointer;transition:all .15s;user-select:none;font-weight:600}
+.chip-sm:hover,.chip-sm.active-preset{background:#4e7fb6;border-color:#4e7fb6;color:#f2f2f2}
+.size-grid{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.tag-badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600;background:#e1edf5;color:#1c3451;border:1px solid #4e7fb680}
+
+/* ── Drop zone ── */
+.drop-zone{border:2px dashed #c0c8d8;border-radius:12px;padding:36px 20px;text-align:center;cursor:pointer;transition:all .15s;background:#fff}
+.drop-zone:hover,.drop-zone.over{border-color:#004c98;background:#e1edf5}
+.drop-zone .icon{font-size:34px;margin-bottom:10px}
+.drop-zone p{color:#6b7a99;font-size:14px}
+.drop-zone strong{color:#004c98}
+#imgInput{display:none}
+.previews{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+.thumb{position:relative;width:84px;height:84px;border-radius:8px;overflow:hidden;border:1.5px solid #e2e8f0}
+.thumb img{width:100%;height:100%;object-fit:cover}
+.thumb .x{position:absolute;top:3px;right:3px;background:rgba(0,0,0,.55);color:#fff;border:none;border-radius:99px;width:18px;height:18px;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+
+/* ── Buttons ── */
+.btn-primary{width:100%;padding:15px;background:#004c98;color:#f2f2f2;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;transition:background .15s;margin-top:4px;font-family:'Quicksand',sans-serif}
+.btn-primary:hover{background:#003c98}
+.btn-primary:disabled{background:#9aadbe;cursor:not-allowed}
+.btn-sm{padding:3px 10px;border-radius:6px;border:1.5px solid #dfdfdf;background:#fff;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;color:#1c3451;font-family:'Quicksand',sans-serif}
+.btn-sm:hover{border-color:#004c98;color:#004c98}
+.btn-save{background:#004c98;color:#f2f2f2;border-color:#004c98}
+.btn-save:hover{background:#003c98;border-color:#003c98;color:#f2f2f2}
+.btn-cancel{color:#6b7a99}
+
+/* ── Result ── */
+.result{margin-top:18px;padding:18px 22px;border-radius:12px;display:none}
+.result.ok{background:#eef1ea;border:1.5px solid #a3c4a3;color:#1c4a1c;display:block}
+.result.fail{background:#fef2f2;border:1.5px solid #fca5a5;color:#7a1c1c;display:block}
+.result h3{font-size:15px;margin-bottom:6px;font-weight:700}
+.result a{color:#004c98;font-weight:700}
+
+/* ── Divider / label ── */
+.divider{height:1px;background:#dfdfdf;margin:16px 0}
+.group-label{font-size:13px;font-weight:700;color:#1c3451;margin-bottom:8px}
+
+/* ── Product summary table ── */
+.prod-table{width:100%;border-collapse:collapse;font-size:13px}
+.prod-table th{text-align:left;padding:10px 12px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#9aadbe;border-bottom:1.5px solid #dfdfdf}
+.prod-table td{padding:10px 12px;border-bottom:1px solid #eef1ea;vertical-align:top}
+.prod-table tr:last-child td{border-bottom:none}
+.prod-table tr:hover td{background:#f5f5f5}
+.prod-title{font-weight:700;color:#004c98;text-decoration:none;font-size:13px}
+.prod-title:hover{text-decoration:underline}
+.stock-ok{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:700;background:#dcfce7;color:#166534;white-space:nowrap}
+.stock-low{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:700;background:#fef9c3;color:#854d0e;white-space:nowrap}
+.stock-out{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:700;background:#fee2e2;color:#991b1b;white-space:nowrap}
+
+/* ── Inventory table ── */
+.inv-table{width:100%;border-collapse:collapse;font-size:13px}
+.inv-table th{text-align:left;padding:7px 14px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#9aadbe;border-bottom:1.5px solid #dfdfdf;background:#f5f5f5;white-space:nowrap}
+.inv-table td{padding:5px 14px;border-bottom:1px solid #f0f2f5;vertical-align:middle}
+.inv-table tr.product-row td{background:#eef3f8;padding:8px 14px;border-top:2px solid #e1edf5;border-bottom:1px solid #dce8f2}
+.inv-table tr.product-row:first-child td{border-top:none}
+.inv-table tbody tr:last-child td{border-bottom:none}
+.inv-table tr:hover:not(.product-row) td{background:#f8fafd}
+.inv-variant{color:#1c3451;padding-left:12px;border-left:2px solid #e1edf5;font-size:12px}
+.inv-single{color:#9aadbe;font-size:12px}
+.inv-qty{width:58px;padding:3px 6px;border:1.5px solid #dfdfdf;border-radius:6px;font-size:13px;font-weight:600;text-align:center;background:#fff;outline:none;transition:border-color .15s;font-family:'Quicksand',sans-serif}
+.inv-qty:focus{border-color:#004c98}
+.inv-qty.changed{border-color:#4e7fb6;background:#e1edf5}
+.inv-actions{display:flex;gap:5px;align-items:center;min-width:110px}
+.prod-img{width:26px;height:26px;border-radius:4px;object-fit:cover;border:1px solid #dfdfdf;flex-shrink:0}
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.page-header h1{font-size:20px;font-weight:700;color:#1c3451}
+.page-header p{font-size:13px;color:#6b7a99;margin-top:2px}
+.refresh-btn{padding:8px 16px;border-radius:10px;border:1.5px solid #dfdfdf;background:#fff;font-size:13px;font-weight:600;cursor:pointer;color:#1c3451;transition:all .15s;font-family:'Quicksand',sans-serif}
+.refresh-btn:hover{border-color:#004c98;color:#004c98}
+.loading{text-align:center;padding:40px;color:#9aadbe;font-size:14px}
+.sku-text{color:#9aadbe;font-size:11px;font-weight:600;letter-spacing:.02em}
+.inv-total{font-size:11px;font-weight:500;color:#6b7a99;margin-left:6px}
+
+/* ── Collections ── */
+.coll-badge{display:inline-block;padding:2px 9px;border-radius:99px;font-size:10px;font-weight:700;letter-spacing:.04em}
+.coll-badge.smart{background:#e1edf5;color:#004c98;border:1px solid #c0d4e8}
+.coll-badge.manual{background:#f5f5f5;color:#6b7a99;border:1px solid #dfdfdf}
+.rule-chip{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:99px;background:#e1edf5;color:#1c3451;font-size:11px;border:1px solid #c0d4e8;margin:2px 2px}
+.rule-chip strong{font-weight:700;color:#1c3451}
+.rule-chip em{font-style:normal;color:#004c98;font-weight:600}
+.rule-join{display:inline-block;font-size:9px;font-weight:700;padding:1px 5px;border-radius:4px;margin:0 2px;vertical-align:middle}
+.rule-join.and{background:#e1edf5;color:#1c3451}
+.rule-join.or{background:#fef9c3;color:#854d0e;border:1px solid #fde68a}
+.rule-manual{font-size:11px;color:#9aadbe;font-style:italic}
+.coll-handle{font-size:11px;color:#9aadbe;margin-top:2px}
+
+/* ── Product image thumbnails ── */
+.thumb-group{display:flex;align-items:center;gap:0;transition:gap .2s}
+.thumb-group:hover{gap:5px}
+.thumb-main{position:relative;flex-shrink:0}
+.prod-thumb{width:48px;height:48px;object-fit:cover;border-radius:8px;border:1.5px solid #dfdfdf;cursor:zoom-in;transition:opacity .15s;display:block;flex-shrink:0}
+.prod-thumb:hover{opacity:.8}
+.thumb-extra{width:48px;height:48px;object-fit:cover;border-radius:8px;cursor:zoom-in;display:block;flex-shrink:0;max-width:0;opacity:0;border:0px solid #dfdfdf;transition:max-width .25s ease,opacity .2s ease,border-width .25s ease}
+.thumb-group:hover .thumb-extra{max-width:48px;opacity:1;border-width:1.5px}
+.thumb-extra-wrap{position:relative;flex-shrink:0;max-width:0;opacity:0;transition:max-width .25s ease,opacity .2s ease}
+.thumb-group:hover .thumb-extra-wrap{max-width:54px;opacity:1}
+.thumb-extra-wrap img{width:48px;height:48px;object-fit:cover;border-radius:8px;border:1.5px solid #dfdfdf;cursor:zoom-in;display:block}
+.thumb-badge{position:absolute;top:-6px;right:-6px;background:#e53e3e;color:#fff;font-size:10px;font-weight:700;min-width:18px;height:18px;padding:0 4px;border-radius:99px;pointer-events:none;line-height:18px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.3);border:1.5px solid #fff;transition:opacity .2s}
+.thumb-group:hover .thumb-badge{opacity:0}
+.thumb-overflow-badge{position:absolute;top:-6px;right:-6px;background:#e53e3e;color:#fff;font-size:10px;font-weight:700;min-width:18px;height:18px;padding:0 4px;border-radius:99px;pointer-events:none;line-height:18px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.3);border:1.5px solid #fff}
+.no-img{width:48px;height:48px;border-radius:8px;border:1.5px dashed #dfdfdf;background:#f5f5f5;display:flex;align-items:center;justify-content:center;font-size:18px;color:#c0c8d8}
+
+/* ── Image modal ── */
+.img-modal{position:fixed;inset:0;background:rgba(28,52,81,.85);display:none;align-items:center;justify-content:center;z-index:99999;cursor:zoom-out;backdrop-filter:blur(4px)}
+.img-modal.open{display:flex}
+.modal-inner{display:flex;flex-direction:column;align-items:center;gap:12px;cursor:default;max-width:90vw}
+#imgModalImg{max-width:100%;max-height:70vh;border-radius:16px;box-shadow:0 24px 64px rgba(0,0,0,.5);display:block}
+.modal-strip{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+.strip-thumb{width:54px;height:54px;object-fit:cover;border-radius:8px;border:2px solid rgba(255,255,255,.25);cursor:pointer;opacity:.5;transition:opacity .15s,border-color .15s;display:block;flex-shrink:0}
+.strip-thumb:hover{opacity:.85;border-color:rgba(255,255,255,.6)}
+.strip-thumb.active{opacity:1;border-color:#fff}
+.img-modal-caption{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);color:#f2f2f2;font-size:14px;font-weight:600;text-shadow:0 1px 4px rgba(0,0,0,.6);pointer-events:none;white-space:nowrap}
+.modal-nav{position:fixed;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.15);border:none;color:#fff;font-size:28px;width:48px;height:48px;border-radius:50%;cursor:pointer;display:none;align-items:center;justify-content:center;transition:background .15s;backdrop-filter:blur(4px)}
+.modal-nav:hover{background:rgba(255,255,255,.3)}
+.img-modal.open .modal-nav{display:flex}
+.modal-nav.prev{left:20px}
+.modal-nav.next{right:20px}
+
+</style>
+</head>
+<body>
+
+<!-- Nav -->
+<div class="topbar">
+  <div class="topbar-logo"><img src="/scc-logo.png" alt="South Curl Curl SLSC"></div>
+  <button class="nav-btn active" onclick="showPage('add')">Add Product</button>
+  <button class="nav-btn" onclick="showPage('products')">Products</button>
+  <button class="nav-btn" onclick="showPage('collections')">Collections</button>
+  <button class="nav-btn" onclick="showPage('inventory')">Inventory</button>
+</div>
+
+<!-- ═══════════════════════════════════════════ ADD PRODUCT PAGE -->
+<div class="page active" id="page-add">
+<div class="wide">
+
+<form id="form">
+  <div class="card">
+    <h2>Product</h2>
+    <div class="field">
+      <label>Product name *</label>
+      <input type="text" id="title" placeholder="e.g. Club Polo" required>
+    </div>
+    <div class="field">
+      <label>Price *</label>
+      <div class="price-row">
+        <span>$</span>
+        <input type="number" id="price" placeholder="0.00" min="0" step="0.01" required>
+      </div>
+    </div>
+    <div class="field">
+      <label>Description <span class="hint">— optional, keep it punchy</span></label>
+      <textarea id="desc" placeholder="e.g. The South Curly club polo — great for presentations and post-surf."></textarea>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Sizes</h2>
+    <div class="group-label">Quick add:</div>
+    <div class="chips">
+      <span class="chip-sm" data-preset="adult">Adult clothing</span>
+      <span class="chip-sm" data-preset="kids">Kids clothing</span>
+      <span class="chip-sm" data-preset="waist">Waist sizes</span>
+      <span class="chip-sm" data-preset="onesize">One size only</span>
+      <span class="chip-sm" data-preset="clear">Clear</span>
+    </div>
+    <div class="divider"></div>
+    <div class="size-grid">
+      <span class="chip sz" data-s="2XS">2XS</span><span class="chip sz" data-s="XS">XS</span>
+      <span class="chip sz" data-s="S">S</span><span class="chip sz" data-s="M">M</span>
+      <span class="chip sz" data-s="L">L</span><span class="chip sz" data-s="XL">XL</span>
+      <span class="chip sz" data-s="XXL">XXL</span><span class="chip sz" data-s="XXXL">XXXL</span>
+      <span class="chip sz" data-s="4">4</span><span class="chip sz" data-s="6">6</span>
+      <span class="chip sz" data-s="8">8</span><span class="chip sz" data-s="10">10</span>
+      <span class="chip sz" data-s="12">12</span><span class="chip sz" data-s="14">14</span>
+      <span class="chip sz" data-s="30">30</span><span class="chip sz" data-s="32">32</span>
+      <span class="chip sz" data-s="34">34</span><span class="chip sz" data-s="36">36</span>
+      <span class="chip sz" data-s="38">38</span>
+      <span class="chip sz" data-s="One Size">One Size</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Tags</h2>
+    <div class="field">
+      <div class="group-label">Who is it for?</div>
+      <div class="chips">
+        <span class="chip tg" data-t="adult">Adults</span>
+        <span class="chip tg" data-t="nippers_src">Nippers / SRC</span>
+      </div>
+    </div>
+    <div class="field">
+      <div class="group-label">Gender <span class="hint">— pick both for unisex</span></div>
+      <div class="chips">
+        <span class="chip tg" data-t="mens">Men's</span>
+        <span class="chip tg" data-t="womens">Women's</span>
+      </div>
+    </div>
+    <div class="field">
+      <div class="group-label">Category</div>
+      <div class="chips">
+        <span class="chip tg" data-t="tee_shirt">T-Shirt</span>
+        <span class="chip tg" data-t="polo">Polo</span>
+        <span class="chip tg" data-t="hoodie">Hoodie</span>
+        <span class="chip tg" data-t="rashie">Rashie</span>
+        <span class="chip tg" data-t="jacket">Jacket</span>
+        <span class="chip tg" data-t="swimwear">Swimwear</span>
+        <span class="chip tg" data-t="cap">Cap / Hat</span>
+        <span class="chip tg" data-t="towel">Towel</span>
+        <span class="chip tg" data-t="bag">Bag</span>
+        <span class="chip tg" data-t="drink-bottle">Drink Bottle</span>
+        <span class="chip tg" data-t="boardshorts">Boardshorts</span>
+      </div>
+    </div>
+    <div class="field">
+      <div class="group-label">Extra</div>
+      <div class="chips">
+        <span class="chip tg on" data-t="new">New Arrival</span>
+        <span class="chip tg" data-t="accessory">Accessory</span>
+        <span class="chip tg" data-t="competitor">Competition / SRC gear</span>
+        <span class="chip tg" data-t="club-merch">Club Merch</span>
+      </div>
+    </div>
+    <div class="field">
+      <div class="group-label">Custom tag</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input type="text" id="customTagInput" placeholder="e.g. age-7-8" style="max-width:200px;padding:8px 12px;font-size:13px">
+        <button type="button" class="btn-sm" onclick="addCustomTag()" style="flex-shrink:0">+ Add tag</button>
+      </div>
+      <div class="chips" id="customTags" style="margin-top:10px"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Photos</h2>
+    <div class="drop-zone" id="dropZone">
+      <div class="icon">📷</div>
+      <p><strong>Drop photos here</strong> or click to browse</p>
+      <p style="margin-top:5px;font-size:12px;color:#94a3b8">JPG or PNG — as many as you like</p>
+    </div>
+    <input type="file" id="imgInput" multiple accept="image/*">
+    <div class="previews" id="previews"></div>
+  </div>
+
+  <button type="submit" class="btn-primary" id="submitBtn">Add to Shop</button>
+</form>
+
+<div id="addResult" class="result"></div>
+
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════ PRODUCTS PAGE -->
+<div class="page" id="page-products">
+<div class="wide">
+
+  <div class="page-header">
+    <div>
+      <h1>Products</h1>
+      <p>All active products in the store</p>
+    </div>
+    <button class="refresh-btn" onclick="loadProductTable()">↻ Refresh</button>
+  </div>
+
+  <div class="card" style="padding:0;overflow:hidden">
+    <div id="productTable"><div class="loading">Loading products…</div></div>
+  </div>
+
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════ COLLECTIONS PAGE -->
+<div class="page" id="page-collections">
+<div class="wide">
+
+  <div class="page-header">
+    <div>
+      <h1>Collections</h1>
+      <p>Smart and manual collection rules</p>
+    </div>
+    <button class="refresh-btn" onclick="loadCollections()">↻ Refresh</button>
+  </div>
+
+  <div class="card" style="padding:0;overflow:hidden">
+    <div id="collTable"><div class="loading">Loading collections…</div></div>
+  </div>
+
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════ INVENTORY PAGE -->
+<div class="page" id="page-inventory">
+<div class="wide">
+
+  <div class="page-header">
+    <div>
+      <h1>Inventory</h1>
+      <p>South Curl Curl Surf Club location</p>
+    </div>
+    <button class="refresh-btn" onclick="loadInventory()">↻ Refresh</button>
+  </div>
+
+  <div class="card" style="padding:0;overflow:hidden">
+    <div id="invTable"><div class="loading">Loading inventory…</div></div>
+  </div>
+
+  <div id="invResult" class="result" style="margin-top:14px"></div>
+
+</div>
+</div>
+
+<!-- Image modal -->
+<div class="img-modal" id="imgModal" onclick="closeModal()">
+  <button class="modal-nav prev" onclick="event.stopPropagation();modalNav(-1)">&#8249;</button>
+  <div class="modal-inner" onclick="event.stopPropagation()">
+    <img id="imgModalImg" src="" alt="">
+    <div class="modal-strip" id="imgModalStrip"></div>
+  </div>
+  <button class="modal-nav next" onclick="event.stopPropagation();modalNav(1)">&#8250;</button>
+  <div class="img-modal-caption" id="imgModalCaption"></div>
+</div>
+
+<script>
+// Store URL — populated from /api/config so the Shopify token never reaches the browser
+let STORE_URL = '';
+fetch('/api/config').then(r => r.json()).then(d => { STORE_URL = 'https://' + d.store; });
+
+// ── Navigation ────────────────────────────────────────────────────────────────
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  event.target.classList.add('active');
+  if (name === 'inventory')    loadInventory();
+  if (name === 'products')     loadProductTable();
+  if (name === 'collections')  loadCollections();
+}
+
+// ── Add Product form ──────────────────────────────────────────────────────────
+const images = [];
+
+document.querySelectorAll('.sz').forEach(c => c.addEventListener('click', () => c.classList.toggle('on')));
+document.querySelectorAll('.tg').forEach(c => c.addEventListener('click', () => c.classList.toggle('on')));
+
+const PRESETS = { adult:['2XS','XS','S','M','L','XL','XXL','XXXL'], kids:['4','6','8','10','12','14'], waist:['30','32','34','36','38'], onesize:['One Size'] };
+document.querySelectorAll('.chip-sm[data-preset]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const key = btn.dataset.preset;
+    document.querySelectorAll('.sz').forEach(c => c.classList.remove('on'));
+    document.querySelectorAll('.chip-sm').forEach(b => b.classList.remove('active-preset'));
+    if (key !== 'clear') {
+      (PRESETS[key] || []).forEach(s => { document.querySelector('.sz[data-s="' + s + '"]')?.classList.add('on'); });
+      btn.classList.add('active-preset');
+    }
+  });
+});
+
+const dropZone = document.getElementById('dropZone');
+const imgInput = document.getElementById('imgInput');
+const previews = document.getElementById('previews');
+dropZone.addEventListener('click', () => imgInput.click());
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('over'));
+dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('over'); addFiles(e.dataTransfer.files); });
+imgInput.addEventListener('change', () => addFiles(imgInput.files));
+
+function addFiles(files) {
+  for (const file of files) {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const base64 = ev.target.result.split(',')[1];
+      const idx = images.length;
+      images.push({ filename: file.name, mimeType: file.type, base64 });
+      const thumb = document.createElement('div');
+      thumb.className = 'thumb';
+      thumb.innerHTML = '<img src="' + ev.target.result + '"><button class="x" type="button">×</button>';
+      thumb.querySelector('.x').onclick = () => { images.splice(idx, 1); thumb.remove(); };
+      previews.appendChild(thumb);
+    };
+    reader.readAsDataURL(file);
+  }
+}
+
+document.getElementById('form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const btn = document.getElementById('submitBtn');
+  const result = document.getElementById('addResult');
+  btn.disabled = true; btn.textContent = 'Adding to shop…';
+  result.className = 'result';
+
+  const payload = {
+    title:    document.getElementById('title').value.trim(),
+    price:    parseFloat(document.getElementById('price').value).toFixed(2),
+    description: document.getElementById('desc').value.trim(),
+    variants: [...document.querySelectorAll('.sz.on')].map(c => c.dataset.s),
+    tags:     [...document.querySelectorAll('.tg.on')].map(c => c.dataset.t),
+    images,
+  };
+
+  try {
+    const res  = await fetch('/api/create-product', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    result.className = 'result ok';
+    result.innerHTML = '<h3>Done! Product added.</h3><p><strong>' + data.title + '</strong> is live. <a href="' + STORE_URL + '/admin/products/' + data.productId + '" target="_blank">Open in Shopify →</a></p>';
+
+    document.getElementById('form').reset();
+    document.querySelectorAll('.chip.on').forEach(c => c.classList.remove('on'));
+    document.querySelector('[data-t="new"]').classList.add('on');
+    images.length = 0; previews.innerHTML = '';
+    document.getElementById('customTags').innerHTML = '';
+    loadProductTable();
+  } catch (err) {
+    result.className = 'result fail';
+    result.innerHTML = '<h3>Something went wrong</h3><p>' + err.message + '</p>';
+  }
+  btn.disabled = false; btn.textContent = 'Add to Shop';
+});
+
+// ── Image modal ───────────────────────────────────────────────────────────────
+let _modalImages = [], _modalCaption = '';
+
+function openModal(src, caption, allImages) {
+  _modalImages = allImages && allImages.length ? allImages : [src];
+  _modalCaption = caption;
+  _showModalImage(_modalImages.indexOf(src) < 0 ? 0 : _modalImages.indexOf(src));
+  document.getElementById('imgModal').classList.add('open');
+}
+
+function _showModalImage(idx) {
+  idx = Math.max(0, Math.min(idx, _modalImages.length - 1));
+  const src = _modalImages[idx];
+  const strip = document.getElementById('imgModalStrip');
+  document.getElementById('imgModalImg').src = src;
+  document.getElementById('imgModalCaption').textContent = _modalCaption;
+  if (_modalImages.length > 1) {
+    strip.innerHTML = _modalImages.map((url, i) =>
+      '<img class="strip-thumb' + (i === idx ? ' active' : '') + '" src="' + url + '" data-index="' + i + '" data-img="' + url + '">'
+    ).join('');
+    strip.style.display = 'flex';
+  } else {
+    strip.innerHTML = '';
+    strip.style.display = 'none';
+  }
+}
+
+function modalNav(dir) {
+  const current = [...document.querySelectorAll('.strip-thumb')].findIndex(t => t.classList.contains('active'));
+  const idx = current < 0 ? 0 : current;
+  _showModalImage(idx + dir);
+}
+
+function closeModal() {
+  document.getElementById('imgModal').classList.remove('open');
+  document.getElementById('imgModalImg').src = '';
+  _modalImages = [];
+}
+document.addEventListener('keydown', e => {
+  if (!document.getElementById('imgModal').classList.contains('open')) return;
+  if (e.key === 'Escape') closeModal();
+  if (e.key === 'ArrowRight') modalNav(1);
+  if (e.key === 'ArrowLeft')  modalNav(-1);
+});
+
+// Strip thumb clicks — must be direct listener, stopPropagation on modal-inner blocks document
+document.getElementById('imgModalStrip').addEventListener('click', e => {
+  const t = e.target.closest('.strip-thumb');
+  if (!t) return;
+  _showModalImage(parseInt(t.dataset.index));
+});
+
+// Product thumbnail clicks
+document.addEventListener('click', e => {
+  const img = e.target.closest('img[data-img]');
+  if (img && !img.classList.contains('strip-thumb') && !img.closest('.img-modal')) {
+    const group = img.closest('.thumb-group');
+    const allImages = group && group.dataset.images ? JSON.parse(group.dataset.images) : null;
+    const caption = img.dataset.caption || (group ? group.dataset.title : '');
+    openModal(img.dataset.img, caption, allImages);
+  }
+});
+
+// ── Product summary table ────────────────────────────────────────────────────
+async function loadProductTable() {
+  const el = document.getElementById('productTable');
+  el.innerHTML = '<div class="loading">Loading…</div>';
+  try {
+    const res  = await fetch('/api/products');
+    const prods = await res.json();
+    if (!prods.length) { el.innerHTML = '<p style="color:#9aadbe;padding:16px">No products found.</p>'; return; }
+
+    const rows = prods.map(p => {
+      const totalStock = p.variants.reduce((s, v) => s + v.qty, 0);
+      const sizes      = p.variants.length === 1 && p.variants[0].title === 'Default Title' ? 'One Size' : p.variants.map(v => v.title).join(', ');
+      const stockBadge = totalStock === 0
+        ? '<span class="stock-out">Out of stock</span>'
+        : totalStock <= 10
+          ? '<span class="stock-low">' + totalStock + ' left</span>'
+          : '<span class="stock-ok">' + totalStock + ' in stock</span>';
+      const catTags = p.tags;
+      const safeTitle = p.title.replace(/"/g, '&quot;');
+      const allImgsJson = JSON.stringify(p.images).replace(/"/g, '&quot;');
+      let thumb;
+      if (!p.images.length) {
+        thumb = '<div class="no-img">📷</div>';
+      } else {
+        const mainBadge = p.images.length > 1
+          ? '<span class="thumb-badge">+' + (p.images.length - 1) + '</span>' : '';
+        let extras = '';
+        if (p.images[1]) {
+          extras += '<img class="thumb-extra" src="' + p.images[1] + '" data-img="' + p.images[1] + '" data-caption="' + safeTitle + '">';
+        }
+        if (p.images[2]) {
+          const overflowBadge = p.images.length > 3
+            ? '<span class="thumb-overflow-badge">+' + (p.images.length - 3) + '</span>' : '';
+          extras += '<div class="thumb-extra-wrap">'
+            + '<img src="' + p.images[2] + '" data-img="' + p.images[2] + '" data-caption="' + safeTitle + '">'
+            + overflowBadge + '</div>';
+        }
+        thumb = '<div class="thumb-group" data-images="' + allImgsJson + '" data-title="' + safeTitle + '">'
+          + '<div class="thumb-main"><img class="prod-thumb" src="' + p.images[0] + '" data-img="' + p.images[0] + '" data-caption="' + safeTitle + '">' + mainBadge + '</div>'
+          + extras + '</div>';
+      }
+      return '<tr>'
+        + '<td style="width:60px">' + thumb + '</td>'
+        + '<td><a class="prod-title" href="' + STORE_URL + '/admin/products/' + p.id + '" target="_blank">' + p.title + '</a></td>'
+        + '<td>$' + parseFloat(p.variants[0]?.price || 0).toFixed(2) + '</td>'
+        + '<td>' + catTags.map(t => '<span class="tag-badge">' + t + '</span>').join(' ') + '</td>'
+        + '<td style="font-size:12px;color:#6b7a99">' + sizes + '</td>'
+        + '<td>' + stockBadge + '</td></tr>';
+    }).join('');
+
+    el.innerHTML = '<table class="prod-table"><thead><tr><th></th><th>Product</th><th>Price</th><th>Category</th><th>Sizes</th><th>Stock</th></tr></thead><tbody>' + rows + '</tbody></table>';
+  } catch (err) {
+    el.innerHTML = '<p style="color:#7a1c1c;padding:16px">Error: ' + err.message + '</p>';
+  }
+}
+
+// ── Collections ───────────────────────────────────────────────────────────────
+const COL_LABEL = {TAG:'Tag',TITLE:'Title',TYPE:'Type',VENDOR:'Vendor',VARIANT_PRICE:'Price',VARIANT_COMPARE_AT_PRICE:'Compare price',VARIANT_INVENTORY:'Inventory',VARIANT_WEIGHT:'Weight'};
+const REL_LABEL = {EQUALS:'=',NOT_EQUALS:'≠',GREATER_THAN:'>',LESS_THAN:'<',CONTAINS:'contains',NOT_CONTAINS:"doesn't contain",STARTS_WITH:'starts with',ENDS_WITH:'ends with',IS_SET:'is set',IS_NOT_SET:'not set'};
+
+async function loadCollections() {
+  const el = document.getElementById('collTable');
+  el.innerHTML = '<div class="loading">Loading collections…</div>';
+  try {
+    const res   = await fetch('/api/collections');
+    const colls = await res.json();
+    if (!colls.length) { el.innerHTML = '<p style="color:#9aadbe;padding:16px">No collections found.</p>'; return; }
+
+    const rows = colls.map(c => {
+      const id = c.id.split('/').pop();
+      const img = c.image
+        ? '<img src="' + c.image.url + '" class="prod-img">'
+        : '<div class="no-img" style="width:26px;height:26px;font-size:11px">📦</div>';
+
+      const type = c.ruleSet
+        ? '<span class="coll-badge smart">Smart</span>'
+        : '<span class="coll-badge manual">Manual</span>';
+
+      let rules;
+      if (c.ruleSet) {
+        const join = c.ruleSet.appliedDisjunctively
+          ? '<span class="rule-join or">OR</span>'
+          : '<span class="rule-join and">AND</span>';
+        rules = c.ruleSet.rules.map((r, i) =>
+          (i > 0 ? join : '')
+          + '<span class="rule-chip"><strong>' + (COL_LABEL[r.column] || r.column) + '</strong>&nbsp;'
+          + (REL_LABEL[r.relation] || r.relation) + '&nbsp;<em>' + r.condition + '</em></span>'
+        ).join('');
+      } else {
+        rules = '<span class="rule-manual">Curated — products added manually</span>';
+      }
+
+      return '<tr>'
+        + '<td style="width:34px">' + img + '</td>'
+        + '<td><a class="prod-title" href="' + STORE_URL + '/admin/collections/' + id + '" target="_blank">' + c.title + '</a>'
+        +   '<div class="coll-handle">/' + c.handle + '</div></td>'
+        + '<td>' + type + '</td>'
+        + '<td style="text-align:center;font-weight:700;color:#1c3451">' + (c.productsCount?.count ?? '—') + '</td>'
+        + '<td>' + rules + '</td>'
+        + '</tr>';
+    }).join('');
+
+    el.innerHTML = '<table class="prod-table" style="table-layout:auto"><thead><tr>'
+      + '<th></th><th>Collection</th><th>Type</th><th style="text-align:center">Products</th><th>Rules</th>'
+      + '</tr></thead><tbody>' + rows + '</tbody></table>';
+  } catch(err) {
+    el.innerHTML = '<p style="color:#7a1c1c;padding:16px">Error: ' + err.message + '</p>';
+  }
+}
+
+// ── Inventory manager ────────────────────────────────────────────────────────
+let invData = [];
+
+async function loadInventory() {
+  const el = document.getElementById('invTable');
+  el.innerHTML = '<div class="loading">Loading inventory…</div>';
+  try {
+    const res = await fetch('/api/products');
+    invData = await res.json();
+    renderInventory();
+  } catch (err) {
+    el.innerHTML = '<p style="color:#991b1b;padding:16px">Error: ' + err.message + '</p>';
+  }
+}
+
+function stockBadge(qty) {
+  if (qty === 0) return '<span class="stock-out">0</span>';
+  if (qty <= 5)  return '<span class="stock-low">' + qty + '</span>';
+  return '<span class="stock-ok">' + qty + '</span>';
+}
+
+function renderInventory() {
+  const el = document.getElementById('invTable');
+  if (!invData.length) { el.innerHTML = '<div class="loading">No products found.</div>'; return; }
+
+  let html = '<table class="inv-table"><thead><tr><th>Product</th><th>Variant</th><th>SKU</th><th style="text-align:center">Qty</th><th></th></tr></thead><tbody>';
+
+  invData.forEach(p => {
+    const totalStock = p.variants.reduce((s, v) => s + v.qty, 0);
+    const imgHtml = p.images[0] ? '<img src="' + p.images[0] + '" class="prod-img">' : '';
+    html += '<tr class="product-row"><td colspan="5">'
+      + '<div style="display:flex;align-items:center;gap:8px">'
+      + imgHtml
+      + '<a class="prod-title" href="' + STORE_URL + '/admin/products/' + p.id + '" target="_blank">' + p.title + '</a>'
+      + '<span class="inv-total">— ' + totalStock + ' in stock</span>'
+      + '</div></td></tr>';
+
+    p.variants.forEach(v => {
+      const singleVariant = p.variants.length === 1 && v.title === 'Default Title';
+      const variantCell = singleVariant
+        ? '<span class="inv-single">One size</span>'
+        : '<span class="inv-variant">' + v.title + '</span>';
+      html += '<tr data-item-id="' + v.inventoryItemId + '" data-current-qty="' + v.qty + '">'
+        + '<td></td>'
+        + '<td>' + variantCell + '</td>'
+        + '<td><span class="sku-text">' + (v.sku || '—') + '</span></td>'
+        + '<td style="text-align:center">'
+        +   '<input type="number" class="inv-qty" min="0" value="' + v.qty + '" data-original="' + v.qty + '" oninput="onQtyChange(this)">'
+        + '</td>'
+        + '<td><div class="inv-actions" id="actions-' + v.inventoryItemId.split('/').pop() + '"></div></td>'
+        + '</tr>';
+    });
+  });
+
+  html += '</tbody></table>';
+  el.innerHTML = html;
+}
+
+function onQtyChange(input) {
+  const newVal  = parseInt(input.value) || 0;
+  const origVal = parseInt(input.dataset.original);
+  const row     = input.closest('tr');
+  const itemId  = row.dataset.itemId;
+  const actionsId = 'actions-' + itemId.split('/').pop();
+  const actions = document.getElementById(actionsId);
+
+  if (newVal !== origVal) {
+    input.classList.add('changed');
+    actions.innerHTML =
+      '<button class="btn-sm btn-save" onclick="saveQty(this)">Save</button>' +
+      '<button class="btn-sm btn-cancel" onclick="cancelQty(this)">Cancel</button>';
+    actions.querySelector('.btn-save')._row   = row;
+    actions.querySelector('.btn-save')._input = input;
+    actions.querySelector('.btn-cancel')._input = input;
+    actions.querySelector('.btn-cancel')._actions = actions;
+  } else {
+    input.classList.remove('changed');
+    actions.innerHTML = '';
+  }
+}
+
+async function saveQty(btn) {
+  const row      = btn._row;
+  const input    = btn._input;
+  const itemId   = row.dataset.itemId;
+  const currentQty = parseInt(row.dataset.currentQty);
+  const newQty     = parseInt(input.value) || 0;
+  const result     = document.getElementById('invResult');
+
+  btn.textContent = 'Saving…'; btn.disabled = true;
+
+  try {
+    const res = await fetch('/api/inventory', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ inventoryItemId: itemId, currentQty, newQty }),
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    row.dataset.currentQty = newQty;
+    input.dataset.original = newQty;
+    input.classList.remove('changed');
+    const actionsId = 'actions-' + itemId.split('/').pop();
+    document.getElementById(actionsId).innerHTML = '';
+
+    const prodRow = [...row.parentElement.querySelectorAll('tr.product-row')].find(pr => {
+      let next = pr.nextElementSibling;
+      while (next && !next.classList.contains('product-row')) { if (next === row) return true; next = next.nextElementSibling; }
+      return false;
+    });
+    if (prodRow) {
+      const siblingRows = [];
+      let next = prodRow.nextElementSibling;
+      while (next && !next.classList.contains('product-row')) { siblingRows.push(next); next = next.nextElementSibling; }
+      const total = siblingRows.reduce((s, r) => s + (parseInt(r.dataset.currentQty) || 0), 0);
+      const span = prodRow.querySelector('.inv-total');
+      if (span) span.textContent = '— ' + total + ' in stock';
+    }
+
+    result.className = 'result ok';
+    result.innerHTML = '<h3>Saved</h3><p>Stock updated successfully.</p>';
+    setTimeout(() => { result.className = 'result'; }, 3000);
+  } catch (err) {
+    result.className = 'result fail';
+    result.innerHTML = '<h3>Save failed</h3><p>' + err.message + '</p>';
+    btn.textContent = 'Save'; btn.disabled = false;
+  }
+}
+
+function cancelQty(btn) {
+  const input   = btn._input;
+  const actions = btn._actions;
+  input.value = input.dataset.original;
+  input.classList.remove('changed');
+  actions.innerHTML = '';
+}
+
+// Custom tags
+function addCustomTag() {
+  const input = document.getElementById('customTagInput');
+  const val   = input.value.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-_]/g, '');
+  if (!val) return;
+  input.value = '';
+
+  const container = document.getElementById('customTags');
+  if (container.querySelector('[data-t="' + val + '"]')) return;
+
+  const chip = document.createElement('span');
+  chip.className   = 'chip tg on';
+  chip.dataset.t   = val;
+  chip.textContent = val;
+  chip.style.cssText = 'position:relative;padding-right:28px';
+
+  const x = document.createElement('button');
+  x.type = 'button';
+  x.textContent = '×';
+  x.style.cssText = 'position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:inherit;cursor:pointer;font-size:14px;line-height:1;padding:0';
+  x.onclick = e => { e.stopPropagation(); chip.remove(); };
+  chip.addEventListener('click', () => chip.classList.toggle('on'));
+
+  chip.appendChild(x);
+  container.appendChild(chip);
+  input.focus();
+}
+
+document.getElementById('customTagInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); addCustomTag(); }
+});
+
+// Floating scroll-to-top
+(function() {
+  const btn = document.createElement('button');
+  btn.innerHTML = '↑';
+  btn.title = 'Back to top';
+  btn.onclick = () => window.scrollTo({top:0,behavior:'smooth'});
+  Object.assign(btn.style, {
+    position:'fixed', bottom:'28px', right:'28px',
+    width:'44px', height:'44px', borderRadius:'50%',
+    background:'#004c98', color:'#fff', fontSize:'22px',
+    cursor:'pointer', zIndex:'9999', border:'none',
+    boxShadow:'0 4px 12px rgba(0,0,0,.3)', display:'none'
+  });
+  document.body.appendChild(btn);
+  window.addEventListener('scroll', () => {
+    btn.style.display = (window.scrollY > 100) ? 'block' : 'none';
+  });
+})();
+</script>
+</body>
+</html>

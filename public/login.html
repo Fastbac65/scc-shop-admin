@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SCC Shop Admin</title>
+<link rel="icon" href="/favicon.ico" type="image/x-icon">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Quicksand',sans-serif;background:#004c98;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.card{background:#fff;border-radius:20px;padding:40px 36px;width:100%;max-width:360px;box-shadow:0 24px 64px rgba(0,0,0,.25)}
+.logo{display:flex;justify-content:center;margin-bottom:28px}
+.logo img{height:60px;width:auto}
+h1{font-size:18px;font-weight:700;color:#1c3451;text-align:center;margin-bottom:4px}
+.sub{font-size:13px;color:#9aadbe;text-align:center;margin-bottom:28px;font-weight:500}
+label{display:block;font-size:13px;font-weight:600;color:#1c3451;margin-bottom:6px}
+input[type=password]{width:100%;padding:12px 14px;border:1.5px solid #dfdfdf;border-radius:10px;font-size:15px;color:#1c3451;background:#fff;outline:none;font-family:'Quicksand',sans-serif;font-weight:500;transition:border-color .15s}
+input[type=password]:focus{border-color:#004c98}
+.btn{width:100%;padding:14px;background:#004c98;color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;margin-top:16px;font-family:'Quicksand',sans-serif;transition:background .15s}
+.btn:hover{background:#003c78}
+.btn:disabled{background:#9aadbe;cursor:not-allowed}
+.error{margin-top:14px;padding:12px 14px;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;color:#991b1b;font-size:13px;font-weight:600;display:none;text-align:center}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo"><img src="/scc-logo.png" alt="South Curl Curl SLSC"></div>
+  <h1>Shop Admin</h1>
+  <p class="sub">South Curl Curl Surf Life Saving Club</p>
+  <form id="form">
+    <label for="password">Password</label>
+    <input type="password" id="password" placeholder="Enter password" autofocus autocomplete="current-password">
+    <button type="submit" class="btn" id="btn">Sign in</button>
+    <div class="error" id="error">Incorrect password — try again.</div>
+  </form>
+</div>
+<script>
+document.getElementById('form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const btn  = document.getElementById('btn');
+  const err  = document.getElementById('error');
+  const pass = document.getElementById('password').value;
+  err.style.display = 'none';
+  btn.disabled = true; btn.textContent = 'Signing in…';
+  try {
+    const res = await fetch('/api/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: pass }),
+    });
+    if (res.ok) {
+      window.location.href = '/';
+    } else {
+      err.style.display = 'block';
+      document.getElementById('password').value = '';
+      document.getElementById('password').focus();
+    }
+  } catch {
+    err.style.display = 'block';
+    err.textContent = 'Network error — check your connection.';
+  }
+  btn.disabled = false; btn.textContent = 'Sign in';
+});
+</script>
+</body>
+</html>
