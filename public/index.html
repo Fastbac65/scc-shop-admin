@@ -426,9 +426,6 @@ function showPage(name) {
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('page-' + name).classList.add('active');
   event.target.classList.add('active');
-  if (name === 'inventory')    loadInventory();
-  if (name === 'products')     loadProductTable();
-  if (name === 'collections')  loadCollections();
 }
 
 // ── Add Product form ──────────────────────────────────────────────────────────
