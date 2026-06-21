@@ -186,14 +186,14 @@ textarea{resize:vertical;min-height:78px;line-height:1.5}
 <!-- Nav -->
 <div class="topbar">
   <div class="topbar-logo"><img src="/scc-logo.png" alt="South Curl Curl SLSC"></div>
-  <button class="nav-btn active" onclick="showPage('add')">Add Product</button>
-  <button class="nav-btn" onclick="showPage('products')">Products</button>
-  <button class="nav-btn" onclick="showPage('collections')">Collections</button>
+  <button class="nav-btn active" onclick="showPage('products')">Products</button>
   <button class="nav-btn" onclick="showPage('inventory')">Inventory</button>
+  <button class="nav-btn" onclick="showPage('collections')">Collections</button>
+  <button class="nav-btn" onclick="showPage('add')">Add Product</button>
 </div>
 
 <!-- ═══════════════════════════════════════════ ADD PRODUCT PAGE -->
-<div class="page active" id="page-add">
+<div class="page" id="page-add">
 <div class="wide">
 
 <form id="form">
@@ -313,7 +313,7 @@ textarea{resize:vertical;min-height:78px;line-height:1.5}
 </div>
 
 <!-- ═══════════════════════════════════════════ PRODUCTS PAGE -->
-<div class="page" id="page-products">
+<div class="page active" id="page-products">
 <div class="wide">
 
   <div class="page-header">
@@ -418,7 +418,7 @@ textarea{resize:vertical;min-height:78px;line-height:1.5}
 <script>
 // Store URL — populated from /api/config so the Shopify token never reaches the browser
 let STORE_URL = '';
-fetch('/api/config').then(r => r.json()).then(d => { STORE_URL = 'https://' + d.store; });
+fetch('/api/config').then(r => r.json()).then(d => { STORE_URL = 'https://' + d.store; loadProductTable(); });
 
 // ── Navigation ────────────────────────────────────────────────────────────────
 function showPage(name) {
