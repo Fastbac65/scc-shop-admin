@@ -148,6 +148,19 @@ textarea{resize:vertical;min-height:78px;line-height:1.5}
 .thumb-badge{position:absolute;top:-6px;right:-6px;background:#e53e3e;color:#fff;font-size:10px;font-weight:700;min-width:18px;height:18px;padding:0 4px;border-radius:99px;pointer-events:none;line-height:18px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.3);border:1.5px solid #fff}
 .no-img{width:48px;height:48px;border-radius:8px;border:1.5px dashed #dfdfdf;background:#f5f5f5;display:flex;align-items:center;justify-content:center;font-size:18px;color:#c0c8d8}
 
+/* ── Micro dialog (replaces browser confirm/alert) ── */
+.micro-dialog{position:fixed;inset:0;background:rgba(28,52,81,.55);display:none;align-items:center;justify-content:center;z-index:999999;backdrop-filter:blur(3px)}
+.micro-dialog.open{display:flex}
+.micro-box{background:#fff;border-radius:16px;padding:24px 28px;min-width:280px;max-width:360px;box-shadow:0 16px 48px rgba(28,52,81,.22)}
+.micro-box p{font-size:13px;color:#1c3451;font-weight:600;margin-bottom:18px;line-height:1.5}
+.micro-actions{display:flex;gap:8px;justify-content:flex-end}
+.micro-cancel{padding:8px 18px;border-radius:10px;border:1.5px solid #dfdfdf;background:#fff;font-size:13px;font-weight:600;cursor:pointer;color:#6b7a99;font-family:'Quicksand',sans-serif}
+.micro-cancel:hover{border-color:#1c3451;color:#1c3451}
+.micro-confirm{padding:8px 18px;border-radius:10px;border:none;background:#c0392b;color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:'Quicksand',sans-serif}
+.micro-confirm:hover{background:#a93226}
+.micro-confirm.info{background:#004c98}
+.micro-confirm.info:hover{background:#003c98}
+
 /* ── Edit modal ── */
 .edit-modal{position:fixed;inset:0;background:rgba(28,52,81,.7);display:none;align-items:center;justify-content:center;z-index:99998;backdrop-filter:blur(4px);padding:20px}
 .edit-modal.open{display:flex}
@@ -377,6 +390,17 @@ textarea{resize:vertical;min-height:78px;line-height:1.5}
 </div>
 </div>
 
+<!-- Micro dialog -->
+<div class="micro-dialog" id="microDialog">
+  <div class="micro-box">
+    <p id="microMsg"></p>
+    <div class="micro-actions">
+      <button class="micro-cancel" id="microCancel">Cancel</button>
+      <button class="micro-confirm" id="microConfirm">OK</button>
+    </div>
+  </div>
+</div>
+
 <!-- Qty popup -->
 <div id="qtyPopup" class="qty-popup">
   <input type="number" id="qtyPopupInput" class="qty-popup-input" min="0" oninput="onQtyPopupInput(this)">
@@ -436,7 +460,36 @@ textarea{resize:vertical;min-height:78px;line-height:1.5}
 </div>
 
 <script>
-// Store URL — populated from /api/config so the Shopify token never reaches the browser
+// ── Micro dialog ─────────────────────────────────────────────────────────────
+function microConfirm(msg) {
+  return new Promise(resolve => {
+    document.getElementById('microMsg').textContent = msg;
+    const dialog = document.getElementById('microDialog');
+    const confirmBtn = document.getElementById('microConfirm');
+    const cancelBtn  = document.getElementById('microCancel');
+    confirmBtn.className = 'micro-confirm';
+    cancelBtn.style.display = '';
+    dialog.classList.add('open');
+    const done = val => { dialog.classList.remove('open'); resolve(val); };
+    confirmBtn.onclick = () => done(true);
+    cancelBtn.onclick  = () => done(false);
+  });
+}
+
+function microAlert(msg) {
+  return new Promise(resolve => {
+    document.getElementById('microMsg').textContent = msg;
+    const dialog = document.getElementById('microDialog');
+    const confirmBtn = document.getElementById('microConfirm');
+    const cancelBtn  = document.getElementById('microCancel');
+    confirmBtn.className = 'micro-confirm info';
+    cancelBtn.style.display = 'none';
+    dialog.classList.add('open');
+    confirmBtn.onclick = () => { dialog.classList.remove('open'); resolve(); };
+  });
+}
+
+// ── Store URL — populated from /api/config so the Shopify token never reaches the browser
 let STORE_URL = '';
 fetch('/api/config').then(r => r.json()).then(d => { STORE_URL = 'https://' + d.store; loadProductTable(); loadInventory(); loadCollections(); });
 
@@ -925,7 +978,7 @@ function renderEditImages(images) {
 }
 
 async function deleteEditImage(btn, mediaId) {
-  if (!confirm('Delete this photo?')) return;
+  if (!await microConfirm('Delete this photo?')) return;
   btn.disabled = true;
   const res = await fetch('/api/delete-image', {
     method: 'POST',
@@ -933,7 +986,7 @@ async function deleteEditImage(btn, mediaId) {
     body: JSON.stringify({ productId: _editId, mediaId }),
   });
   const d = await res.json();
-  if (d.error) { alert(d.error); btn.disabled = false; return; }
+  if (d.error) { await microAlert(d.error); btn.disabled = false; return; }
   btn.closest('.edit-img-wrap').remove();
   const p = _products.find(x => x.id === _editId);
   if (p) p.images = p.images.filter(i => i.id !== mediaId);
