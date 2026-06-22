@@ -932,7 +932,7 @@ const ALL_TAGS = [
 ];
 const ALL_SIZES = ['2XS','XS','S','M','L','XL','XXL','XXXL','4','6','8','10','12','14','30','32','34','36','38','One Size'];
 
-let _editId = null, _editVariants = [], _pendingDeletes = [], _pendingPrimary = null;
+let _editId = null, _editVariants = [], _pendingDeletes = [], _pendingPrimary = null, _pendingUploads = [];
 
 function openEditModal(id) {
   const p = _products.find(x => x.id === id);
@@ -941,6 +941,7 @@ function openEditModal(id) {
   _editVariants = p.variants;
   _pendingDeletes = [];
   _pendingPrimary = null;
+  _pendingUploads = [];
 
   document.getElementById('editTitle').value = p.title;
   document.getElementById('editPrice').value = parseFloat(p.variants[0]?.price || 0).toFixed(2);
@@ -1036,6 +1037,7 @@ async function addEditPhotos(input) {
       wrap.innerHTML = '<img src="' + preview + '"><button class="edit-img-del" onclick="deleteEditImage(this,\'' + safeId + '\')">×</button>'
         + '<button class="edit-img-heart" title="Set as primary" onclick="setAsPrimary(this,\'' + safeId + '\')">♥</button>';
       wrap.dataset.mediaId = d.mediaId;
+      _pendingUploads.push(d.mediaId);
       const p = _products.find(x => x.id === _editId);
       if (p) p.images.push({ id: d.mediaId, url: d.url || preview });
     } catch (err) {
@@ -1059,8 +1061,19 @@ function closeEditModal() {
   document.getElementById('editModal').classList.remove('open');
   const btn = document.getElementById('editSaveBtn');
   btn.disabled = false; btn.textContent = 'Save changes';
+  // Revert any uploads that weren't saved
+  if (_pendingUploads.length) {
+    const id = _editId;
+    _pendingUploads.forEach(mediaId => {
+      fetch('/api/delete-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId: id, mediaId }),
+      });
+    });
+  }
   _editId = null; _editVariants = [];
-  _pendingDeletes = []; _pendingPrimary = null;
+  _pendingDeletes = []; _pendingPrimary = null; _pendingUploads = [];
 }
 
 async function saveProduct() {
@@ -1107,6 +1120,7 @@ async function saveProduct() {
       });
     }
 
+    _pendingUploads = [];
     closeEditModal();
     loadProductTable();
   } catch (err) {
