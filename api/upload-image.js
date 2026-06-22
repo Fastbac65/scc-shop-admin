@@ -53,6 +53,21 @@ export default async function handler(req, res) {
     if (errs3.length) throw new Error(errs3[0].message);
 
     const node = r3.productCreateMedia.media[0];
+
+    // Step 4: move new image to position 0 so it becomes the primary/featured image
+    if (node?.id) {
+      await gql(`
+        mutation productReorderMedia($id: ID!, $moves: [MoveInput!]!) {
+          productReorderMedia(id: $id, moves: $moves) {
+            job { id }
+            userErrors { field message }
+          }
+        }`, {
+        id: productGid,
+        moves: [{ id: node.id, newPosition: '0' }],
+      });
+    }
+
     res.status(200).json({ ok: true, mediaId: node?.id, url: node?.image?.url || target.resourceUrl });
   } catch (err) {
     res.status(500).json({ error: err.message });
