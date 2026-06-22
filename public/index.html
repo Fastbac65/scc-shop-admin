@@ -837,8 +837,10 @@ function openQtyPopup(el, itemId, currentAvail, committed) {
   popup.classList.add('open');
 
   const rect = el.getBoundingClientRect();
+  const popupW = popup.offsetWidth;
+  const left = Math.max(8, Math.min(rect.left + rect.width / 2 - popupW / 2, window.innerWidth - popupW - 8));
   popup.style.top  = (rect.bottom + 6) + 'px';
-  popup.style.left = Math.min(rect.left, window.innerWidth - 420) + 'px';
+  popup.style.left = left + 'px';
 
   input.focus(); input.select();
 }
