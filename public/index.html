@@ -1007,8 +1007,7 @@ function setAsPrimary(btn, mediaId) {
   }, 900);
 }
 
-async function deleteEditImage(btn, mediaId) {
-  if (!await microConfirm('Delete this photo? Change takes effect on Save.')) return;
+function deleteEditImage(btn, mediaId) {
   const p = _products.find(x => x.id === _editId);
   if (p) p.images = p.images.filter(i => i.id !== mediaId);
   if (_pendingPrimary === mediaId) _pendingPrimary = null;
