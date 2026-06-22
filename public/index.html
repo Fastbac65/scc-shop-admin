@@ -927,13 +927,15 @@ const ALL_TAGS = [
 ];
 const ALL_SIZES = ['2XS','XS','S','M','L','XL','XXL','XXXL','4','6','8','10','12','14','30','32','34','36','38','One Size'];
 
-let _editId = null, _editVariants = [];
+let _editId = null, _editVariants = [], _pendingDeletes = [], _pendingPrimary = null;
 
 function openEditModal(id) {
   const p = _products.find(x => x.id === id);
   if (!p) return;
   _editId = id;
   _editVariants = p.variants;
+  _pendingDeletes = [];
+  _pendingPrimary = null;
 
   document.getElementById('editTitle').value = p.title;
   document.getElementById('editPrice').value = parseFloat(p.variants[0]?.price || 0).toFixed(2);
@@ -954,7 +956,7 @@ function openEditModal(id) {
     sizesEl.innerHTML = display.map(s =>
       '<span class="chip sz' + (currentTitles.includes(s) ? ' on' : '') + '" data-s="' + s + '" onclick="this.classList.toggle(\'on\')">' + s + '</span>'
     ).join('');
-    noteEl.textContent = 'Removing a size will delete its variant and inventory data.';
+    noteEl.textContent = 'Removing a size will delete its variant and inventory data. Size and image changes are staged — nothing saves until you click Save changes.';
     noteEl.style.display = 'block';
   }
 
@@ -987,35 +989,22 @@ function renderEditImages(images) {
   }).join('');
 }
 
-async function setAsPrimary(mediaId) {
-  const res = await fetch('/api/reorder-image', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ productId: _editId, mediaId }),
-  });
-  const d = await res.json();
-  if (d.error) { await microAlert('Could not set primary: ' + d.error); return; }
+function setAsPrimary(mediaId) {
   const p = _products.find(x => x.id === _editId);
-  if (p) {
-    const idx = p.images.findIndex(i => i.id === mediaId);
-    if (idx > 0) p.images.unshift(p.images.splice(idx, 1)[0]);
-    renderEditImages(p.images);
-  }
+  if (!p) return;
+  const idx = p.images.findIndex(i => i.id === mediaId);
+  if (idx > 0) p.images.unshift(p.images.splice(idx, 1)[0]);
+  _pendingPrimary = mediaId;
+  renderEditImages(p.images);
 }
 
 async function deleteEditImage(btn, mediaId) {
-  if (!await microConfirm('Delete this photo?')) return;
-  btn.disabled = true;
-  const res = await fetch('/api/delete-image', {
-    method: 'POST',
-    headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({ productId: _editId, mediaId }),
-  });
-  const d = await res.json();
-  if (d.error) { await microAlert(d.error); btn.disabled = false; return; }
-  btn.closest('.edit-img-wrap').remove();
+  if (!await microConfirm('Delete this photo? Change takes effect on Save.')) return;
   const p = _products.find(x => x.id === _editId);
   if (p) p.images = p.images.filter(i => i.id !== mediaId);
+  if (_pendingPrimary === mediaId) _pendingPrimary = null;
+  _pendingDeletes.push(mediaId);
+  renderEditImages(p ? p.images : []);
 }
 
 async function addEditPhotos(input) {
@@ -1063,6 +1052,7 @@ function closeEditModal() {
   const btn = document.getElementById('editSaveBtn');
   btn.disabled = false; btn.textContent = 'Save changes';
   _editId = null; _editVariants = [];
+  _pendingDeletes = []; _pendingPrimary = null;
 }
 
 async function saveProduct() {
@@ -1092,6 +1082,23 @@ async function saveProduct() {
     });
     const data = await res.json();
     if (data.error) throw new Error(data.error);
+
+    // Apply staged image changes
+    await Promise.all(_pendingDeletes.map(mediaId =>
+      fetch('/api/delete-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId: _editId, mediaId }),
+      })
+    ));
+    if (_pendingPrimary) {
+      await fetch('/api/reorder-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId: _editId, mediaId: _pendingPrimary }),
+      });
+    }
+
     closeEditModal();
     loadProductTable();
   } catch (err) {
