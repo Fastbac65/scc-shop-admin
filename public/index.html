@@ -957,7 +957,7 @@ function openEditModal(id) {
     sizesEl.innerHTML = display.map(s =>
       '<span class="chip sz' + (currentTitles.includes(s) ? ' on' : '') + '" data-s="' + s + '" onclick="this.classList.toggle(\'on\')">' + s + '</span>'
     ).join('');
-    noteEl.textContent = 'Removing a size will delete its variant and inventory data. Size and image changes are staged — nothing saves until you click Save changes.';
+    noteEl.textContent = 'Removing a size will delete its variant and inventory data. Click the heart to select the primary product image.';
     noteEl.style.display = 'block';
   }
 
