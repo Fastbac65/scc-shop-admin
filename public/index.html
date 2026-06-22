@@ -932,7 +932,7 @@ const ALL_TAGS = [
 ];
 const ALL_SIZES = ['2XS','XS','S','M','L','XL','XXL','XXXL','4','6','8','10','12','14','30','32','34','36','38','One Size'];
 
-let _editId = null, _editVariants = [], _pendingDeletes = [], _pendingPrimary = null, _pendingUploads = [];
+let _editId = null, _editVariants = [], _pendingDeletes = [], _pendingPrimary = null, _pendingUploads = [], _originalImages = null;
 
 function openEditModal(id) {
   const p = _products.find(x => x.id === id);
@@ -942,6 +942,7 @@ function openEditModal(id) {
   _pendingDeletes = [];
   _pendingPrimary = null;
   _pendingUploads = [];
+  _originalImages = JSON.parse(JSON.stringify(p.images));
 
   document.getElementById('editTitle').value = p.title;
   document.getElementById('editPrice').value = parseFloat(p.variants[0]?.price || 0).toFixed(2);
@@ -1071,8 +1072,13 @@ function closeEditModal() {
       });
     });
   }
+  // Restore in-memory images to pre-edit state
+  if (_originalImages) {
+    const p = _products.find(x => x.id === _editId);
+    if (p) p.images = _originalImages;
+  }
   _editId = null; _editVariants = [];
-  _pendingDeletes = []; _pendingPrimary = null; _pendingUploads = [];
+  _pendingDeletes = []; _pendingPrimary = null; _pendingUploads = []; _originalImages = null;
 }
 
 async function saveProduct() {
@@ -1120,6 +1126,7 @@ async function saveProduct() {
     }
 
     _pendingUploads = [];
+    _originalImages = null;
     closeEditModal();
     loadProductTable();
   } catch (err) {
