@@ -181,9 +181,10 @@ textarea{resize:vertical;min-height:78px;line-height:1.5}
 .edit-img-overlay{position:absolute;inset:0;background:rgba(255,255,255,.65);display:flex;align-items:center;justify-content:center;font-size:18px}
 .add-photo-btn{display:inline-flex;align-items:center;gap:5px;padding:6px 14px;border:1.5px dashed #c5d4e0;border-radius:8px;font-size:12px;font-weight:600;color:#6b7a99;cursor:pointer;transition:all .15s;font-family:'Quicksand',sans-serif}
 .add-photo-btn:hover{border-color:#004c98;color:#004c98}
-.edit-img-star{position:absolute;bottom:3px;left:3px;width:22px;height:22px;border-radius:50%;border:none;background:rgba(28,52,81,.6);color:#c8d4df;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;line-height:1;padding:0}
-.edit-img-star:hover{background:#004c98;color:#f9de00}
-.edit-img-wrap.primary .edit-img-star{background:rgba(28,52,81,.75);color:#f9de00;cursor:default}
+.edit-img-heart{position:absolute;bottom:3px;left:3px;width:22px;height:22px;border-radius:50%;border:none;background:rgba(28,52,81,.6);color:#c8d4df;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;padding:0}
+.edit-img-wrap.primary .edit-img-heart{background:rgba(180,30,30,.7);color:#fff;cursor:default}
+@keyframes heart-flash{0%{color:#c8d4df;background:rgba(28,52,81,.6)}40%{color:#fff;background:rgba(180,30,30,.7)}80%{color:#fff;background:rgba(180,30,30,.7)}100%{color:#c8d4df;background:rgba(28,52,81,.6)}}
+.edit-img-heart.flashing{animation:heart-flash .9s ease forwards;pointer-events:none}
 
 /* ── Image modal ── */
 .img-modal{position:fixed;inset:0;background:rgba(28,52,81,.85);display:none;align-items:center;justify-content:center;z-index:99999;cursor:zoom-out;backdrop-filter:blur(4px)}
@@ -979,23 +980,26 @@ function renderEditImages(images) {
   grid.innerHTML = images.map((img, i) => {
     const safeId = img.id.replace(/'/g, '');
     const isPrimary = i === 0;
-    const starTitle = isPrimary ? 'Primary image' : 'Set as primary';
-    const starClick = isPrimary ? '' : ' onclick="setAsPrimary(\'' + safeId + '\')"';
+    const heartTitle = isPrimary ? 'Primary image' : 'Set as primary';
+    const heartClick = isPrimary ? '' : ' onclick="setAsPrimary(this,\'' + safeId + '\')"';
     return '<div class="edit-img-wrap' + (isPrimary ? ' primary' : '') + '" data-media-id="' + img.id + '">'
       + '<img src="' + img.url + '">'
       + '<button class="edit-img-del" onclick="deleteEditImage(this,\'' + safeId + '\')">×</button>'
-      + '<button class="edit-img-star" title="' + starTitle + '"' + starClick + '>★</button>'
+      + '<button class="edit-img-heart" title="' + heartTitle + '"' + heartClick + '>♥</button>'
       + '</div>';
   }).join('');
 }
 
-function setAsPrimary(mediaId) {
-  const p = _products.find(x => x.id === _editId);
-  if (!p) return;
-  const idx = p.images.findIndex(i => i.id === mediaId);
-  if (idx > 0) p.images.unshift(p.images.splice(idx, 1)[0]);
-  _pendingPrimary = mediaId;
-  renderEditImages(p.images);
+function setAsPrimary(btn, mediaId) {
+  btn.classList.add('flashing');
+  setTimeout(() => {
+    const p = _products.find(x => x.id === _editId);
+    if (!p) return;
+    const idx = p.images.findIndex(i => i.id === mediaId);
+    if (idx > 0) p.images.unshift(p.images.splice(idx, 1)[0]);
+    _pendingPrimary = mediaId;
+    renderEditImages(p.images);
+  }, 900);
 }
 
 async function deleteEditImage(btn, mediaId) {
@@ -1026,7 +1030,7 @@ async function addEditPhotos(input) {
       if (d.error) throw new Error(d.error);
       const safeId = (d.mediaId || '').replace(/'/g, '');
       wrap.innerHTML = '<img src="' + preview + '"><button class="edit-img-del" onclick="deleteEditImage(this,\'' + safeId + '\')">×</button>'
-        + '<button class="edit-img-star" title="Set as primary" onclick="setAsPrimary(\'' + safeId + '\')">★</button>';
+        + '<button class="edit-img-heart" title="Set as primary" onclick="setAsPrimary(this,\'' + safeId + '\')">♥</button>';
       wrap.dataset.mediaId = d.mediaId;
       const p = _products.find(x => x.id === _editId);
       if (p) p.images.push({ id: d.mediaId, url: d.url || preview });
