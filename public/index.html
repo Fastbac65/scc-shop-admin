@@ -441,6 +441,7 @@ textarea{resize:vertical;min-height:78px;line-height:1.5}
         <input type="file" accept="image/*" multiple id="editPhotoInput" onchange="addEditPhotos(this)" style="display:none">
         <span class="add-photo-btn">+ Add photo(s)</span>
       </label>
+      <p style="font-size:11px;color:#9aadbe;margin-top:8px">Click the heart to select the primary product image.</p>
     </div>
     <div class="field">
       <label>Tags</label>
@@ -957,7 +958,7 @@ function openEditModal(id) {
     sizesEl.innerHTML = display.map(s =>
       '<span class="chip sz' + (currentTitles.includes(s) ? ' on' : '') + '" data-s="' + s + '" onclick="this.classList.toggle(\'on\')">' + s + '</span>'
     ).join('');
-    noteEl.textContent = 'Removing a size will delete its variant and inventory data. Click the heart to select the primary product image.';
+    noteEl.textContent = 'Removing a size will delete its variant and inventory data.';
     noteEl.style.display = 'block';
   }
 
