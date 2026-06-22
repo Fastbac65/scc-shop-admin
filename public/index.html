@@ -196,11 +196,12 @@ textarea{resize:vertical;min-height:78px;line-height:1.5}
 .strip-thumb:hover{opacity:.85;border-color:rgba(255,255,255,.6)}
 .strip-thumb.active{opacity:1;border-color:#fff}
 .img-modal-caption{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);color:#f2f2f2;font-size:14px;font-weight:600;text-shadow:0 1px 4px rgba(0,0,0,.6);pointer-events:none;white-space:nowrap}
-.modal-nav{position:fixed;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.15);border:none;color:#fff;font-size:28px;width:48px;height:48px;border-radius:50%;cursor:pointer;display:none;align-items:center;justify-content:center;transition:background .15s;backdrop-filter:blur(4px)}
-.modal-nav:hover{background:rgba(255,255,255,.3)}
+.modal-nav{position:fixed;top:50%;transform:translateY(-50%);background:none;border:none;color:#fff;font-size:52px;font-weight:700;line-height:1;cursor:pointer;display:none;align-items:center;justify-content:center;padding:20px 18px;transition:color .15s;text-shadow:0 2px 10px rgba(0,0,0,.7)}
+.modal-nav:hover{color:#f9de00}
 .img-modal.open .modal-nav{display:flex}
-.modal-nav.prev{left:20px}
-.modal-nav.next{right:20px}
+.modal-nav.hide{display:none!important}
+.modal-nav.prev{left:0}
+.modal-nav.next{right:0}
 
 </style>
 </head>
@@ -606,6 +607,8 @@ function _showModalImage(idx) {
   const strip = document.getElementById('imgModalStrip');
   document.getElementById('imgModalImg').src = src;
   document.getElementById('imgModalCaption').textContent = _modalCaption;
+  document.querySelector('.modal-nav.prev').classList.toggle('hide', idx === 0);
+  document.querySelector('.modal-nav.next').classList.toggle('hide', idx === _modalImages.length - 1);
   if (_modalImages.length > 1) {
     strip.innerHTML = _modalImages.map((url, i) =>
       '<img class="strip-thumb' + (i === idx ? ' active' : '') + '" src="' + url + '" data-index="' + i + '" data-img="' + url + '">'
