@@ -196,8 +196,12 @@ textarea{resize:vertical;min-height:78px;line-height:1.5}
 .strip-thumb:hover{opacity:.85;border-color:rgba(255,255,255,.6)}
 .strip-thumb.active{opacity:1;border-color:#fff}
 .img-modal-caption{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);color:#f2f2f2;font-size:14px;font-weight:600;text-shadow:0 1px 4px rgba(0,0,0,.6);pointer-events:none;white-space:nowrap}
-.modal-nav{position:fixed;top:50%;transform:translateY(-50%);background:none;border:none;color:#fff;font-size:52px;font-weight:700;line-height:1;cursor:pointer;display:none;align-items:center;justify-content:center;padding:20px 18px;transition:color .15s;text-shadow:0 2px 10px rgba(0,0,0,.7)}
-.modal-nav:hover{color:#f9de00}
+.modal-nav{position:fixed;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;display:none;align-items:center;justify-content:center;padding:24px 20px;transition:opacity .15s}
+.modal-nav:hover{opacity:.7}
+.modal-nav::before{content:'';display:block;width:28px;height:28px;border-top:3.5px solid #fff;border-right:3.5px solid #fff;transition:border-color .15s;filter:drop-shadow(0 2px 6px rgba(0,0,0,.6))}
+.modal-nav:hover::before{border-color:#f9de00}
+.modal-nav.prev::before{transform:rotate(-135deg)}
+.modal-nav.next::before{transform:rotate(45deg)}
 .img-modal.open .modal-nav{display:flex}
 .modal-nav.hide{display:none!important}
 .modal-nav.prev{left:0}
@@ -458,12 +462,12 @@ textarea{resize:vertical;min-height:78px;line-height:1.5}
 
 <!-- Image modal -->
 <div class="img-modal" id="imgModal" onclick="closeModal()">
-  <button class="modal-nav prev" onclick="event.stopPropagation();modalNav(-1)">&#8249;</button>
+  <button class="modal-nav prev" onclick="event.stopPropagation();modalNav(-1)"></button>
   <div class="modal-inner" onclick="event.stopPropagation()">
     <img id="imgModalImg" src="" alt="">
     <div class="modal-strip" id="imgModalStrip"></div>
   </div>
-  <button class="modal-nav next" onclick="event.stopPropagation();modalNav(1)">&#8250;</button>
+  <button class="modal-nav next" onclick="event.stopPropagation();modalNav(1)"></button>
   <div class="img-modal-caption" id="imgModalCaption"></div>
 </div>
 
