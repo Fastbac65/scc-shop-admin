@@ -1,4 +1,3 @@
-import { Buffer } from 'buffer';
 import { shopifyClient, readBody } from './_shopify.js';
 
 function buildSku(title, variantTitle) {
@@ -13,30 +12,12 @@ function buildSku(title, variantTitle) {
 }
 
 async function uploadImage(gql, productId, img) {
-  const buffer = Buffer.from(img.base64, 'base64');
-  const staged = await gql(`
-    mutation stagedUploadsCreate($input: [StagedUploadInput!]!) {
-      stagedUploadsCreate(input: $input) {
-        stagedTargets { url resourceUrl parameters { name value } }
-        userErrors { field message }
-      }
-    }`, {
-    input: [{ filename: img.filename, mimeType: img.mimeType, resource: 'IMAGE', fileSize: String(buffer.length), httpMethod: 'POST' }],
-  });
-  const errs = staged.stagedUploadsCreate.userErrors;
-  if (errs.length) throw new Error(`Stage error: ${errs[0].message}`);
-  const target = staged.stagedUploadsCreate.stagedTargets[0];
-  const form = new FormData();
-  for (const { name, value } of target.parameters) form.append(name, value);
-  form.append('file', new Blob([buffer], { type: img.mimeType }), img.filename);
-  const upload = await fetch(target.url, { method: 'POST', body: form });
-  if (!upload.ok) throw new Error(`Upload failed: ${upload.status}`);
   await gql(`
     mutation productCreateMedia($productId: ID!, $media: [CreateMediaInput!]!) {
       productCreateMedia(productId: $productId, media: $media) { mediaUserErrors { field message } }
     }`, {
     productId,
-    media: [{ originalSource: target.resourceUrl, mediaContentType: 'IMAGE', alt: img.filename.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ') }],
+    media: [{ originalSource: img.resourceUrl, mediaContentType: 'IMAGE', alt: img.filename?.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ') }],
   });
 }
 

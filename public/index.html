@@ -538,19 +538,35 @@ dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.
 imgInput.addEventListener('change', () => addFiles(imgInput.files));
 
 function addFiles(files) {
-  for (const file of files) {
-    const reader = new FileReader();
-    reader.onload = ev => {
-      const base64 = ev.target.result.split(',')[1];
-      const idx = images.length;
-      images.push({ filename: file.name, mimeType: file.type, base64 });
-      const thumb = document.createElement('div');
-      thumb.className = 'thumb';
-      thumb.innerHTML = '<img src="' + ev.target.result + '"><button class="x" type="button">×</button>';
-      thumb.querySelector('.x').onclick = () => { images.splice(idx, 1); thumb.remove(); };
-      previews.appendChild(thumb);
-    };
-    reader.readAsDataURL(file);
+  for (const file of Array.from(files)) {
+    const entry = { filename: file.name, mimeType: file.type, resourceUrl: null };
+    images.push(entry);
+    const thumb = document.createElement('div');
+    thumb.className = 'thumb';
+    thumb.innerHTML = '<img src="' + URL.createObjectURL(file) + '">'
+      + '<div style="position:absolute;inset:0;background:rgba(255,255,255,.65);display:flex;align-items:center;justify-content:center;font-size:18px">⟳</div>'
+      + '<button class="x" type="button">×</button>';
+    thumb.querySelector('.x').onclick = () => { const i = images.indexOf(entry); if (i > -1) images.splice(i, 1); thumb.remove(); };
+    previews.appendChild(thumb);
+    (async () => {
+      try {
+        const r1 = await fetch('/api/upload-image', {
+          method: 'POST', headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ filename: file.name, mimeType: file.type, fileSize: file.size }),
+        });
+        const { uploadUrl, resourceUrl, error: e1 } = await r1.json();
+        if (e1) throw new Error(e1);
+        const putRes = await fetch(uploadUrl, { method: 'PUT', headers: {'Content-Type': file.type}, body: file });
+        if (!putRes.ok) throw new Error('Storage upload failed: ' + putRes.status);
+        entry.resourceUrl = resourceUrl;
+        thumb.querySelector('div').remove();
+      } catch {
+        const i = images.indexOf(entry); if (i > -1) images.splice(i, 1);
+        const ov = thumb.querySelector('div');
+        if (ov) { ov.textContent = '✗'; ov.style.color = '#c0392b'; }
+        setTimeout(() => thumb.remove(), 2000);
+      }
+    })();
   }
 }
 
@@ -567,7 +583,7 @@ document.getElementById('form').addEventListener('submit', async e => {
     description: document.getElementById('desc').value.trim(),
     variants: [...document.querySelectorAll('.sz.on')].map(c => c.dataset.s),
     tags:     [...document.querySelectorAll('.tg.on')].map(c => c.dataset.t),
-    images,
+    images: images.filter(img => img.resourceUrl),
   };
 
   try {
@@ -1027,11 +1043,17 @@ async function addEditPhotos(input) {
     wrap.innerHTML = '<img src="' + preview + '"><div class="edit-img-overlay">⟳</div>';
     grid.appendChild(wrap);
     try {
-      const base64 = await fileToBase64(file);
+      const r1 = await fetch('/api/upload-image', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ filename: file.name, mimeType: file.type, fileSize: file.size }),
+      });
+      const { uploadUrl, resourceUrl, error: e1 } = await r1.json();
+      if (e1) throw new Error(e1);
+      const putRes = await fetch(uploadUrl, { method: 'PUT', headers: {'Content-Type': file.type}, body: file });
+      if (!putRes.ok) throw new Error('Storage upload failed: ' + putRes.status);
       const res = await fetch('/api/upload-image', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ productId: _editId, filename: file.name, mimeType: file.type, base64 }),
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ productId: _editId, resourceUrl }),
       });
       const d = await res.json();
       if (d.error) throw new Error(d.error);
@@ -1051,13 +1073,6 @@ async function addEditPhotos(input) {
   input.value = '';
 }
 
-function fileToBase64(file) {
-  return new Promise(resolve => {
-    const reader = new FileReader();
-    reader.onload = e => resolve(e.target.result.split(',')[1]);
-    reader.readAsDataURL(file);
-  });
-}
 
 function closeEditModal() {
   document.getElementById('editModal').classList.remove('open');
