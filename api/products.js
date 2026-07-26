@@ -1,5 +1,7 @@
 import { shopifyClient } from './_shopify.js';
 
+const LOCATION_ID = 'gid://shopify/Location/108890554671';
+
 export default async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).end();
   const { gql } = shopifyClient();
@@ -8,7 +10,7 @@ export default async function handler(req, res) {
     let cursor = null;
     while (true) {
       const data = await gql(`
-        query($cursor: String) {
+        query($cursor: String, $locationId: ID!) {
           products(first: 50, after: $cursor) {
             pageInfo { hasNextPage endCursor }
             nodes {
@@ -19,15 +21,15 @@ export default async function handler(req, res) {
                   id title price sku
                   inventoryItem {
                     id
-                    inventoryLevels(first: 1) {
-                      nodes { quantities(names: ["available","committed","on_hand"]) { name quantity } }
+                    inventoryLevel(locationId: $locationId) {
+                      quantities(names: ["available","committed","on_hand"]) { name quantity }
                     }
                   }
                 }
               }
             }
           }
-        }`, { cursor });
+        }`, { cursor, locationId: LOCATION_ID });
       all.push(...data.products.nodes);
       if (!data.products.pageInfo.hasNextPage) break;
       cursor = data.products.pageInfo.endCursor;
@@ -46,9 +48,9 @@ export default async function handler(req, res) {
           price: v.price,
           sku: v.sku,
           inventoryItemId: v.inventoryItem.id,
-          qty: v.inventoryItem.inventoryLevels.nodes[0]?.quantities.find(q => q.name === 'available')?.quantity ?? 0,
-          committed: v.inventoryItem.inventoryLevels.nodes[0]?.quantities.find(q => q.name === 'committed')?.quantity ?? 0,
-          onHand: v.inventoryItem.inventoryLevels.nodes[0]?.quantities.find(q => q.name === 'on_hand')?.quantity ?? 0,
+          qty: v.inventoryItem.inventoryLevel?.quantities.find(q => q.name === 'available')?.quantity ?? 0,
+          committed: v.inventoryItem.inventoryLevel?.quantities.find(q => q.name === 'committed')?.quantity ?? 0,
+          onHand: v.inventoryItem.inventoryLevel?.quantities.find(q => q.name === 'on_hand')?.quantity ?? 0,
         })),
       }))
       .sort((a, b) => a.title.localeCompare(b.title));
